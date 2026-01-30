@@ -63,7 +63,7 @@ struct GeneralSettingsView: View {
 // MARK: - 翻译设置
 
 struct TranslationSettingsView: View {
-    @StateObject private var translationManager = TranslationServiceManager.shared
+    @ObservedObject private var translationManager = TranslationServiceManager.shared
     @State private var showApiKey = false
 
     var body: some View {

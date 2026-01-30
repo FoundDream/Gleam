@@ -13,7 +13,7 @@ struct TranslationPopoverView: View {
     var onTranslationComplete: ((String, String, TranslationEngine) -> Void)?
     var onClose: (() -> Void)?
 
-    @StateObject private var translationManager = TranslationServiceManager.shared
+    @ObservedObject private var translationManager = TranslationServiceManager.shared
     @State private var translatedText: String = ""
     @State private var isLoading: Bool = true
     @State private var errorMessage: String?

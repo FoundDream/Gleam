@@ -8,6 +8,7 @@
 import Foundation
 import AppKit
 import ApplicationServices
+import Carbon.HIToolbox
 
 /// 辅助功能服务 - 用于获取选中文本
 class AccessibilityService {
@@ -28,79 +29,92 @@ class AccessibilityService {
 
     /// 获取当前选中的文本
     func getSelectedText() -> String? {
-        // 首先尝试从剪贴板获取（通过模拟 Cmd+C）
+        // 保存当前剪贴板内容
         let pasteboard = NSPasteboard.general
+        let oldChangeCount = pasteboard.changeCount
         let oldContent = pasteboard.string(forType: .string)
 
-        // 模拟 Cmd+C
-        simulateCommandC()
+        // 模拟 Cmd+C 复制
+        simulateCopy()
 
         // 等待剪贴板更新
-        Thread.sleep(forTimeInterval: 0.1)
+        usleep(150000) // 150ms
 
-        let newContent = pasteboard.string(forType: .string)
-
-        // 恢复剪贴板内容
-        if let old = oldContent, old != newContent {
-            // 延迟恢复，以便我们先获取到选中的文本
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                pasteboard.clearContents()
-                pasteboard.setString(old, forType: .string)
+        // 检查剪贴板是否有变化
+        if pasteboard.changeCount != oldChangeCount {
+            if let newContent = pasteboard.string(forType: .string), !newContent.isEmpty {
+                // 延迟恢复剪贴板
+                if let old = oldContent {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        pasteboard.clearContents()
+                        pasteboard.setString(old, forType: .string)
+                    }
+                }
+                return newContent
             }
         }
 
-        // 如果内容有变化，返回新内容
-        if newContent != oldContent {
-            return newContent
+        // 剪贴板没变化，尝试通过 Accessibility API
+        if let text = getSelectedTextViaAccessibility(), !text.isEmpty {
+            return text
         }
 
-        // 如果剪贴板没变化，尝试通过辅助功能 API 获取
-        return getSelectedTextViaAccessibility()
+        return nil
     }
 
     // MARK: - Private
 
-    private func simulateCommandC() {
-        let source = CGEventSource(stateID: .combinedSessionState)
+    private func simulateCopy() {
+        // 使用 CGEvent 模拟 Cmd+C
+        let source = CGEventSource(stateID: .hidSystemState)
 
-        // 按下 Cmd
-        let cmdDown = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: true)
+        // Cmd down
+        let cmdDown = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(kVK_Command), keyDown: true)
         cmdDown?.flags = .maskCommand
 
-        // 按下 C
-        let cDown = CGEvent(keyboardEventSource: source, virtualKey: 0x08, keyDown: true)
+        // C down
+        let cDown = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(kVK_ANSI_C), keyDown: true)
         cDown?.flags = .maskCommand
 
-        // 释放 C
-        let cUp = CGEvent(keyboardEventSource: source, virtualKey: 0x08, keyDown: false)
+        // C up
+        let cUp = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(kVK_ANSI_C), keyDown: false)
         cUp?.flags = .maskCommand
 
-        // 释放 Cmd
-        let cmdUp = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: false)
+        // Cmd up
+        let cmdUp = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(kVK_Command), keyDown: false)
 
-        let location = CGEventTapLocation.cghidEventTap
-        cmdDown?.post(tap: location)
-        cDown?.post(tap: location)
-        cUp?.post(tap: location)
-        cmdUp?.post(tap: location)
+        // 发送事件
+        cmdDown?.post(tap: .cghidEventTap)
+        cDown?.post(tap: .cghidEventTap)
+        cUp?.post(tap: .cghidEventTap)
+        cmdUp?.post(tap: .cghidEventTap)
     }
 
     private func getSelectedTextViaAccessibility() -> String? {
-        guard let focusedApp = NSWorkspace.shared.frontmostApplication else { return nil }
+        guard hasAccessibilityPermission else {
+            print("没有辅助功能权限")
+            return nil
+        }
+
+        guard let focusedApp = NSWorkspace.shared.frontmostApplication else {
+            return nil
+        }
 
         let pid = focusedApp.processIdentifier
         let appElement = AXUIElementCreateApplication(pid)
 
         var focusedElement: CFTypeRef?
-        let result = AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedElement)
-
-        guard result == .success, let element = focusedElement else { return nil }
+        guard AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedElement) == .success,
+              let element = focusedElement else {
+            return nil
+        }
 
         var selectedText: CFTypeRef?
-        let textResult = AXUIElementCopyAttributeValue(element as! AXUIElement, kAXSelectedTextAttribute as CFString, &selectedText)
+        guard AXUIElementCopyAttributeValue(element as! AXUIElement, kAXSelectedTextAttribute as CFString, &selectedText) == .success,
+              let text = selectedText as? String else {
+            return nil
+        }
 
-        guard textResult == .success, let text = selectedText as? String else { return nil }
-
-        return text.isEmpty ? nil : text
+        return text
     }
 }

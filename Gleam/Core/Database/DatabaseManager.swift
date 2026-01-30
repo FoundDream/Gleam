@@ -64,7 +64,6 @@ class DatabaseManager {
             CREATE TABLE IF NOT EXISTS screenshots (
                 id TEXT PRIMARY KEY,
                 image_path TEXT NOT NULL,
-                ocr_text TEXT,
                 tags TEXT,
                 created_at REAL NOT NULL
             )
@@ -210,8 +209,8 @@ class DatabaseManager {
 
     func insertScreenshot(_ item: ScreenshotItem) -> Bool {
         let sql = """
-            INSERT INTO screenshots (id, image_path, ocr_text, tags, created_at)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO screenshots (id, image_path, tags, created_at)
+            VALUES (?, ?, ?, ?)
         """
 
         var statement: OpaquePointer?
@@ -222,9 +221,8 @@ class DatabaseManager {
 
         sqlite3_bind_text(statement, 1, item.id.uuidString, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
         sqlite3_bind_text(statement, 2, item.imagePath, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-        sqlite3_bind_text(statement, 3, item.ocrText, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-        sqlite3_bind_text(statement, 4, tagsJson, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-        sqlite3_bind_double(statement, 5, item.timestamp.timeIntervalSince1970)
+        sqlite3_bind_text(statement, 3, tagsJson, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+        sqlite3_bind_double(statement, 4, item.timestamp.timeIntervalSince1970)
 
         return sqlite3_step(statement) == SQLITE_DONE
     }
@@ -268,16 +266,14 @@ class DatabaseManager {
             return nil
         }
 
-        let ocrText = sqlite3_column_text(statement, 2).map { String(cString: $0) } ?? ""
-        let tagsJson = sqlite3_column_text(statement, 3).map { String(cString: $0) } ?? "[]"
+        let tagsJson = sqlite3_column_text(statement, 2).map { String(cString: $0) } ?? "[]"
         let tags = (try? JSONDecoder().decode([String].self, from: tagsJson.data(using: .utf8)!)) ?? []
-        let timestamp = Date(timeIntervalSince1970: sqlite3_column_double(statement, 4))
+        let timestamp = Date(timeIntervalSince1970: sqlite3_column_double(statement, 3))
 
         return ScreenshotItem(
             id: id,
             timestamp: timestamp,
             imagePath: String(cString: imagePathStr),
-            ocrText: ocrText,
             tags: tags
         )
     }

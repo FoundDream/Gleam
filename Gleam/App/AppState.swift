@@ -99,7 +99,7 @@ class AppState: ObservableObject {
             // 保存到数据库
             if db.insertScreenshot(item) {
                 screenshots.insert(item, at: 0)
-                print("截图已保存，OCR 文字: \(item.ocrText.prefix(50))...")
+                print("截图已保存: \(item.imagePath)")
             }
         } catch {
             print("截图失败: \(error)")
@@ -166,7 +166,6 @@ class AppState: ObservableObject {
             return screenshots
         }
         return screenshots.filter { item in
-            item.ocrText.localizedCaseInsensitiveContains(searchText) ||
             item.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
         }
     }

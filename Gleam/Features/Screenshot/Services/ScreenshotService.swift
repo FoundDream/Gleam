@@ -7,7 +7,6 @@
 
 import Foundation
 import AppKit
-import Vision
 import Combine
 
 /// 截图服务
@@ -16,7 +15,7 @@ class ScreenshotService: ObservableObject {
     static let shared = ScreenshotService()
 
     /// 截图存储目录
-    private let screenshotDirectory: URL
+    let screenshotDirectory: URL
 
     private init() {
         // 创建截图存储目录
@@ -36,7 +35,7 @@ class ScreenshotService: ObservableObject {
         task.waitUntilExit()
 
         // 等待剪贴板更新
-        try await Task.sleep(nanoseconds: 100_000_000)
+        try await Task.sleep(nanoseconds: 200_000_000)
 
         // 从剪贴板获取图片
         guard let image = NSPasteboard.general.readObjects(forClasses: [NSImage.self], options: nil)?.first as? NSImage else {
@@ -50,14 +49,10 @@ class ScreenshotService: ObservableObject {
         // 保存图片到磁盘
         try saveImage(image, to: imagePath)
 
-        // 进行 OCR
-        let ocrText = try await performOCR(on: image)
-
         return ScreenshotItem(
             id: id,
             timestamp: Date(),
             imagePath: imagePath,
-            ocrText: ocrText,
             tags: []
         )
     }
@@ -74,53 +69,10 @@ class ScreenshotService: ObservableObject {
         print("截图已保存到: \(path)")
     }
 
-    /// 执行 OCR
-    private func performOCR(on image: NSImage) async throws -> String {
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            throw ScreenshotError.invalidImage
-        }
-
-        return try await withCheckedThrowingContinuation { continuation in
-            let request = VNRecognizeTextRequest { request, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-
-                guard let observations = request.results as? [VNRecognizedTextObservation] else {
-                    continuation.resume(returning: "")
-                    return
-                }
-
-                let text = observations.compactMap { observation in
-                    observation.topCandidates(1).first?.string
-                }.joined(separator: "\n")
-
-                continuation.resume(returning: text)
-            }
-
-            request.recognitionLevel = .accurate
-            request.recognitionLanguages = ["zh-Hans", "zh-Hant", "en-US", "ja", "ko"]
-            request.usesLanguageCorrection = true
-
-            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-            do {
-                try handler.perform([request])
-            } catch {
-                continuation.resume(throwing: error)
-            }
-        }
-    }
-
     /// 加载截图图片
     func loadImage(for item: ScreenshotItem) -> NSImage? {
         guard !item.imagePath.isEmpty else { return nil }
         return NSImage(contentsOfFile: item.imagePath)
-    }
-
-    /// 获取截图存储目录
-    var storageDirectory: URL {
-        screenshotDirectory
     }
 
     /// 计算截图总大小
@@ -145,7 +97,6 @@ struct ScreenshotItem: Identifiable {
     let id: UUID
     let timestamp: Date
     let imagePath: String
-    let ocrText: String
     var tags: [String]
 }
 

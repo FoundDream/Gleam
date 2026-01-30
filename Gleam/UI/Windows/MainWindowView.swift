@@ -393,12 +393,6 @@ struct ScreenshotCard: View {
                 .frame(height: 120)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
-            // OCR 文字预览
-            Text(item.ocrText)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .lineLimit(3)
-
             // 时间和标签
             HStack {
                 Text(item.timestamp.formatted(.relative(presentation: .named)))
@@ -468,19 +462,12 @@ struct ScreenshotDetailView: View {
                 // 操作按钮
                 HStack {
                     Button {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(item.ocrText, forType: .string)
-                    } label: {
-                        Label("复制文字", systemImage: "doc.on.doc")
-                    }
-
-                    Button {
                         if let image = loadedImage {
                             NSPasteboard.general.clearContents()
                             NSPasteboard.general.writeObjects([image])
                         }
                     } label: {
-                        Label("复制图片", systemImage: "photo.on.rectangle")
+                        Label("复制图片", systemImage: "doc.on.doc")
                     }
                     .disabled(loadedImage == nil)
 
@@ -495,28 +482,6 @@ struct ScreenshotDetailView: View {
                 .buttonStyle(.bordered)
 
                 Divider()
-
-                // OCR 文字
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("识别文字")
-                            .font(.headline)
-
-                        Spacer()
-
-                        Text("\(item.ocrText.count) 字")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-
-                    Text(item.ocrText)
-                        .font(.body)
-                        .textSelection(.enabled)
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color(nsColor: .textBackgroundColor))
-                        .cornerRadius(8)
-                }
 
                 // 信息
                 VStack(alignment: .leading, spacing: 8) {
