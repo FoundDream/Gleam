@@ -2,23 +2,26 @@
 
 An elegant macOS productivity tool featuring text translation, screenshot collection, and content management.
 
-[中文文档](README_ZH.md)
+[Chinese Documentation](README_ZH.md)
 
 ## Features
 
 ### 🌐 Text Translation
+
 - Global hotkey `⌥T` to trigger
 - Multiple translation engines: DeepSeek, OpenAI, DeepL
 - Beautiful floating window for results
 - Auto-save translation history
 
 ### 📸 Screenshot Collection
+
 - Global hotkey `⌥S` to trigger
 - Native macOS screenshot tool integration
 - Auto-save to local storage
 - Image preview and management
 
 ### ⭐ Quick Collect
+
 - Global hotkey `⌥C` to trigger
 - One-click save selected text
 - Tag support for organization
@@ -26,14 +29,14 @@ An elegant macOS productivity tool featuring text translation, screenshot collec
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `⌥T` | Translate selected text |
-| `⌥S` | Take screenshot |
-| `⌥C` | Quick collect |
-| `⌘N` | New collection |
-| `⌘,` | Open settings |
-| `ESC` | Close popup |
+| Shortcut | Action                  |
+| -------- | ----------------------- |
+| `⌥T`     | Translate selected text |
+| `⌥S`     | Take screenshot         |
+| `⌥C`     | Quick collect           |
+| `⌘N`     | New collection          |
+| `⌘,`     | Open settings           |
+| `ESC`    | Close popup             |
 
 ## Tech Stack
 
@@ -83,6 +86,7 @@ Gleam/
 ## Data Storage
 
 Data is stored in the app sandbox:
+
 ```
 ~/Library/Containers/ziwen.Gleam/Data/Library/Application Support/Gleam/
 ├── gleam.db          # SQLite database
@@ -131,4 +135,4 @@ MIT License
 
 ## Author
 
-Song Ziwen
+Ziwen

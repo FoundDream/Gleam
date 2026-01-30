@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-/// 收藏服务
+/// Collection Service
 @MainActor
 class CollectionService: ObservableObject {
     static let shared = CollectionService()
@@ -19,7 +19,7 @@ class CollectionService: ObservableObject {
         loadCollections()
     }
 
-    /// 添加收藏
+    /// Add collection
     func addCollection(type: CollectionType, content: String, title: String? = nil, url: String? = nil) -> CollectionItem {
         let item = CollectionItem(
             id: UUID(),
@@ -38,13 +38,13 @@ class CollectionService: ObservableObject {
         return item
     }
 
-    /// 删除收藏
+    /// Delete collection
     func deleteCollection(id: UUID) {
         collections.removeAll { $0.id == id }
         saveCollections()
     }
 
-    /// 搜索收藏
+    /// Search collections
     func search(query: String) -> [CollectionItem] {
         guard !query.isEmpty else { return collections }
 
@@ -55,7 +55,7 @@ class CollectionService: ObservableObject {
         }
     }
 
-    /// 按标签过滤
+    /// Filter by tag
     func filterByTag(_ tag: String) -> [CollectionItem] {
         collections.filter { $0.tags.contains(tag) }
     }
@@ -72,15 +72,15 @@ class CollectionService: ObservableObject {
     }
 
     private func loadCollections() {
-        // TODO: 从数据库加载
+        // TODO: Load from database
     }
 
     private func saveCollections() {
-        // TODO: 保存到数据库
+        // TODO: Save to database
     }
 }
 
-/// 收藏项
+/// Collection Item
 struct CollectionItem: Identifiable {
     let id: UUID
     let type: CollectionType
@@ -92,7 +92,7 @@ struct CollectionItem: Identifiable {
     var updatedAt: Date
 }
 
-/// 收藏类型
+/// Collection Type
 enum CollectionType: String, CaseIterable {
     case text = "text"
     case link = "link"
@@ -110,10 +110,10 @@ enum CollectionType: String, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .text: return "文本"
-        case .link: return "链接"
-        case .image: return "图片"
-        case .file: return "文件"
+        case .text: return "Text"
+        case .link: return "Link"
+        case .image: return "Image"
+        case .file: return "File"
         }
     }
 }

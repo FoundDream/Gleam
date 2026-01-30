@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// 主窗口视图
+/// Main Window View
 struct MainWindowView: View {
     @EnvironmentObject var appState: AppState
 
@@ -18,21 +18,21 @@ struct MainWindowView: View {
             DetailView()
         }
         .navigationSplitViewStyle(.balanced)
-        .searchable(text: $appState.searchText, prompt: "搜索收藏、截图...")
+        .searchable(text: $appState.searchText, prompt: "Search collections, screenshots...")
         .sheet(isPresented: $appState.showNewCollectionSheet) {
             NewCollectionSheet()
         }
     }
 }
 
-// MARK: - 侧边栏
+// MARK: - Sidebar
 
 struct SidebarView: View {
     @EnvironmentObject var appState: AppState
 
     var body: some View {
         List(selection: $appState.selectedTab) {
-            Section("内容") {
+            Section("Content") {
                 ForEach(SidebarTab.allCases) { tab in
                     Label {
                         HStack {
@@ -54,7 +54,7 @@ struct SidebarView: View {
                 }
             }
 
-            Section("标签") {
+            Section("Tags") {
                 ForEach(allTags, id: \.self) { tag in
                     Label(tag, systemImage: "tag")
                         .foregroundColor(.secondary)
@@ -101,7 +101,7 @@ struct SidebarView: View {
     }
 }
 
-// MARK: - 详情视图
+// MARK: - Detail View
 
 struct DetailView: View {
     @EnvironmentObject var appState: AppState
@@ -118,7 +118,7 @@ struct DetailView: View {
     }
 }
 
-// MARK: - 收藏视图
+// MARK: - Collections View
 
 struct CollectionsView: View {
     @EnvironmentObject var appState: AppState
@@ -126,7 +126,7 @@ struct CollectionsView: View {
 
     var body: some View {
         HSplitView {
-            // 列表
+            // List
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ForEach(appState.filteredCollections) { item in
@@ -140,15 +140,15 @@ struct CollectionsView: View {
             }
             .frame(minWidth: 300)
 
-            // 详情
+            // Detail
             if let item = selectedItem {
                 CollectionDetailView(item: item)
                     .frame(minWidth: 300)
             } else {
                 EmptyDetailView(
                     icon: "star",
-                    title: "选择一个收藏",
-                    subtitle: "点击左侧列表查看详情"
+                    title: "Select a Collection",
+                    subtitle: "Click on the list to view details"
                 )
                 .frame(minWidth: 300)
             }
@@ -158,15 +158,15 @@ struct CollectionsView: View {
                 Button {
                     appState.showNewCollectionSheet = true
                 } label: {
-                    Label("添加收藏", systemImage: "plus")
+                    Label("Add Collection", systemImage: "plus")
                 }
 
                 Spacer()
 
-                Picker("排序", selection: .constant("date")) {
-                    Text("按日期").tag("date")
-                    Text("按标题").tag("title")
-                    Text("按类型").tag("type")
+                Picker("Sort", selection: .constant("date")) {
+                    Text("By Date").tag("date")
+                    Text("By Title").tag("title")
+                    Text("By Type").tag("type")
                 }
                 .pickerStyle(.menu)
                 .frame(width: 100)
@@ -175,7 +175,7 @@ struct CollectionsView: View {
     }
 }
 
-// MARK: - 收藏卡片
+// MARK: - Collection Card
 
 struct CollectionCard: View {
     let item: CollectionItem
@@ -230,7 +230,7 @@ struct CollectionCard: View {
     }
 }
 
-// MARK: - 收藏详情
+// MARK: - Collection Detail
 
 struct CollectionDetailView: View {
     let item: CollectionItem
@@ -239,7 +239,7 @@ struct CollectionDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                // 头部
+                // Header
                 HStack {
                     Image(systemName: item.type.icon)
                         .font(.largeTitle)
@@ -250,7 +250,7 @@ struct CollectionDetailView: View {
                             .font(.title2)
                             .fontWeight(.bold)
 
-                        Text("创建于 \(item.createdAt.formatted())")
+                        Text("Created on \(item.createdAt.formatted())")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -258,13 +258,13 @@ struct CollectionDetailView: View {
                     Spacer()
 
                     Menu {
-                        Button("编辑", systemImage: "pencil") {}
-                        Button("复制", systemImage: "doc.on.doc") {
+                        Button("Edit", systemImage: "pencil") {}
+                        Button("Copy", systemImage: "doc.on.doc") {
                             NSPasteboard.general.clearContents()
                             NSPasteboard.general.setString(item.content, forType: .string)
                         }
                         Divider()
-                        Button("删除", systemImage: "trash", role: .destructive) {
+                        Button("Delete", systemImage: "trash", role: .destructive) {
                             appState.deleteCollection(id: item.id)
                         }
                     } label: {
@@ -276,7 +276,7 @@ struct CollectionDetailView: View {
 
                 Divider()
 
-                // 内容
+                // Content
                 Text(item.content)
                     .font(.body)
                     .textSelection(.enabled)
@@ -295,10 +295,10 @@ struct CollectionDetailView: View {
                     }
                 }
 
-                // 标签
+                // Tags
                 if !item.tags.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("标签")
+                        Text("Tags")
                             .font(.headline)
 
                         FlowLayout(spacing: 8) {
@@ -320,7 +320,7 @@ struct CollectionDetailView: View {
     }
 }
 
-// MARK: - 截图视图
+// MARK: - Screenshots View
 
 struct ScreenshotsView: View {
     @EnvironmentObject var appState: AppState
@@ -328,7 +328,7 @@ struct ScreenshotsView: View {
 
     var body: some View {
         HSplitView {
-            // 网格
+            // Grid
             ScrollView {
                 LazyVGrid(columns: [
                     GridItem(.adaptive(minimum: 200, maximum: 300), spacing: 16)
@@ -344,15 +344,15 @@ struct ScreenshotsView: View {
             }
             .frame(minWidth: 400)
 
-            // 详情
+            // Detail
             if let item = selectedItem {
                 ScreenshotDetailView(item: item)
                     .frame(minWidth: 300)
             } else {
                 EmptyDetailView(
                     icon: "photo",
-                    title: "选择一张截图",
-                    subtitle: "点击左侧查看 OCR 文字"
+                    title: "Select a Screenshot",
+                    subtitle: "Click to view OCR text"
                 )
                 .frame(minWidth: 300)
             }
@@ -364,12 +364,12 @@ struct ScreenshotsView: View {
                         await appState.captureScreenshot()
                     }
                 } label: {
-                    Label("截图", systemImage: "camera.viewfinder")
+                    Label("Screenshot", systemImage: "camera.viewfinder")
                 }
 
                 Spacer()
 
-                Picker("视图", selection: .constant("grid")) {
+                Picker("View", selection: .constant("grid")) {
                     Image(systemName: "square.grid.2x2").tag("grid")
                     Image(systemName: "list.bullet").tag("list")
                 }
@@ -380,7 +380,7 @@ struct ScreenshotsView: View {
     }
 }
 
-// MARK: - 截图卡片
+// MARK: - Screenshot Card
 
 struct ScreenshotCard: View {
     let item: ScreenshotItem
@@ -388,12 +388,12 @@ struct ScreenshotCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // 图片
+            // Image
             ScreenshotThumbnail(imagePath: item.imagePath)
                 .frame(height: 120)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
-            // 时间和标签
+            // Time and tags
             HStack {
                 Text(item.timestamp.formatted(.relative(presentation: .named)))
                     .font(.caption2)
@@ -424,7 +424,7 @@ struct ScreenshotCard: View {
     }
 }
 
-// MARK: - 截图详情
+// MARK: - Screenshot Detail
 
 struct ScreenshotDetailView: View {
     let item: ScreenshotItem
@@ -434,7 +434,7 @@ struct ScreenshotDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                // 图片
+                // Image
                 Group {
                     if let image = loadedImage {
                         Image(nsImage: image)
@@ -459,7 +459,7 @@ struct ScreenshotDetailView: View {
                     loadedImage = ScreenshotService.shared.loadImage(for: item)
                 }
 
-                // 操作按钮
+                // Action buttons
                 HStack {
                     Button {
                         if let image = loadedImage {
@@ -467,7 +467,7 @@ struct ScreenshotDetailView: View {
                             NSPasteboard.general.writeObjects([image])
                         }
                     } label: {
-                        Label("复制图片", systemImage: "doc.on.doc")
+                        Label("Copy Image", systemImage: "doc.on.doc")
                     }
                     .disabled(loadedImage == nil)
 
@@ -476,26 +476,26 @@ struct ScreenshotDetailView: View {
                     Button(role: .destructive) {
                         appState.deleteScreenshot(id: item.id)
                     } label: {
-                        Label("删除", systemImage: "trash")
+                        Label("Delete", systemImage: "trash")
                     }
                 }
                 .buttonStyle(.bordered)
 
                 Divider()
 
-                // 信息
+                // Info
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("信息")
+                    Text("Info")
                         .font(.headline)
 
                     Grid(alignment: .leading, verticalSpacing: 8) {
                         GridRow {
-                            Text("时间")
+                            Text("Time")
                                 .foregroundColor(.secondary)
                             Text(item.timestamp.formatted())
                         }
                         GridRow {
-                            Text("标签")
+                            Text("Tags")
                                 .foregroundColor(.secondary)
                             HStack {
                                 ForEach(item.tags, id: \.self) { tag in
@@ -516,7 +516,7 @@ struct ScreenshotDetailView: View {
     }
 }
 
-// MARK: - 翻译历史视图
+// MARK: - Translation History View
 
 struct TranslationHistoryView: View {
     @EnvironmentObject var appState: AppState
@@ -525,8 +525,8 @@ struct TranslationHistoryView: View {
         if appState.translationHistory.isEmpty {
             EmptyDetailView(
                 icon: "clock.arrow.circlepath",
-                title: "暂无翻译历史",
-                subtitle: "使用 ⌥T 划词翻译后会在这里显示"
+                title: "No Translation History",
+                subtitle: "Use ⌥T to translate selected text"
             )
         } else {
             List(appState.translationHistory) { record in
@@ -557,7 +557,7 @@ struct TranslationHistoryView: View {
     }
 }
 
-// MARK: - 新建收藏表单
+// MARK: - New Collection Sheet
 
 struct NewCollectionSheet: View {
     @EnvironmentObject var appState: AppState
@@ -571,21 +571,21 @@ struct NewCollectionSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // 标题栏
+            // Title bar
             HStack {
-                Button("取消") {
+                Button("Cancel") {
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
 
                 Spacer()
 
-                Text("新建收藏")
+                Text("New Collection")
                     .font(.headline)
 
                 Spacer()
 
-                Button("保存") {
+                Button("Save") {
                     saveCollection()
                 }
                 .keyboardShortcut(.defaultAction)
@@ -595,26 +595,26 @@ struct NewCollectionSheet: View {
 
             Divider()
 
-            // 表单
+            // Form
             Form {
-                Picker("类型", selection: $type) {
+                Picker("Type", selection: $type) {
                     ForEach(CollectionType.allCases, id: \.self) { t in
                         Label(t.displayName, systemImage: t.icon).tag(t)
                     }
                 }
 
-                TextField("标题", text: $title)
+                TextField("Title", text: $title)
 
                 if type == .link {
                     TextField("URL", text: $url)
                 }
 
-                Section("内容") {
+                Section("Content") {
                     TextEditor(text: $content)
                         .frame(minHeight: 100)
                 }
 
-                TextField("标签（用逗号分隔）", text: $tagsInput)
+                TextField("Tags (comma separated)", text: $tagsInput)
             }
             .formStyle(.grouped)
             .padding()
@@ -639,7 +639,7 @@ struct NewCollectionSheet: View {
     }
 }
 
-// MARK: - 截图缩略图
+// MARK: - Screenshot Thumbnail
 
 struct ScreenshotThumbnail: View {
     let imagePath: String
@@ -684,7 +684,7 @@ struct ScreenshotThumbnail: View {
     }
 }
 
-// MARK: - 空状态视图
+// MARK: - Empty State View
 
 struct EmptyDetailView: View {
     let icon: String
@@ -754,7 +754,7 @@ struct FlowLayout: Layout {
     }
 }
 
-// MARK: - CollectionType 扩展
+// MARK: - CollectionType Extension
 
 extension CollectionType {
     var color: Color {

@@ -10,40 +10,40 @@ import AppKit
 import ApplicationServices
 import Carbon.HIToolbox
 
-/// 辅助功能服务 - 用于获取选中文本
+/// Accessibility Service - for getting selected text
 class AccessibilityService {
     static let shared = AccessibilityService()
 
     private init() {}
 
-    /// 检查辅助功能权限
+    /// Check accessibility permission
     var hasAccessibilityPermission: Bool {
         AXIsProcessTrusted()
     }
 
-    /// 请求辅助功能权限
+    /// Request accessibility permission
     func requestAccessibilityPermission() {
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
         AXIsProcessTrustedWithOptions(options as CFDictionary)
     }
 
-    /// 获取当前选中的文本
+    /// Get currently selected text
     func getSelectedText() -> String? {
-        // 保存当前剪贴板内容
+        // Save current clipboard content
         let pasteboard = NSPasteboard.general
         let oldChangeCount = pasteboard.changeCount
         let oldContent = pasteboard.string(forType: .string)
 
-        // 模拟 Cmd+C 复制
+        // Simulate Cmd+C copy
         simulateCopy()
 
-        // 等待剪贴板更新
+        // Wait for clipboard update
         usleep(150000) // 150ms
 
-        // 检查剪贴板是否有变化
+        // Check if clipboard has changed
         if pasteboard.changeCount != oldChangeCount {
             if let newContent = pasteboard.string(forType: .string), !newContent.isEmpty {
-                // 延迟恢复剪贴板
+                // Restore clipboard after delay
                 if let old = oldContent {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         pasteboard.clearContents()
@@ -54,7 +54,7 @@ class AccessibilityService {
             }
         }
 
-        // 剪贴板没变化，尝试通过 Accessibility API
+        // Clipboard unchanged, try via Accessibility API
         if let text = getSelectedTextViaAccessibility(), !text.isEmpty {
             return text
         }
@@ -65,7 +65,7 @@ class AccessibilityService {
     // MARK: - Private
 
     private func simulateCopy() {
-        // 使用 CGEvent 模拟 Cmd+C
+        // Use CGEvent to simulate Cmd+C
         let source = CGEventSource(stateID: .hidSystemState)
 
         // Cmd down
@@ -83,7 +83,7 @@ class AccessibilityService {
         // Cmd up
         let cmdUp = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(kVK_Command), keyDown: false)
 
-        // 发送事件
+        // Post events
         cmdDown?.post(tap: .cghidEventTap)
         cDown?.post(tap: .cghidEventTap)
         cUp?.post(tap: .cghidEventTap)
@@ -92,7 +92,7 @@ class AccessibilityService {
 
     private func getSelectedTextViaAccessibility() -> String? {
         guard hasAccessibilityPermission else {
-            print("没有辅助功能权限")
+            print("No accessibility permission")
             return nil
         }
 

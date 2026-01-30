@@ -7,33 +7,33 @@
 
 import SwiftUI
 
-/// 菜单栏弹出视图
+/// Menu Bar Popover View
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(spacing: 0) {
-            // 头部
+            // Header
             headerSection
 
             Divider()
                 .padding(.vertical, 8)
 
-            // 功能模块
+            // Feature modules
             featureModules
 
             Divider()
                 .padding(.vertical, 8)
 
-            // 底部操作
+            // Bottom section
             bottomSection
         }
         .padding(12)
         .frame(width: 280)
     }
 
-    // MARK: - 头部区域
+    // MARK: - Header Section
 
     private var headerSection: some View {
         HStack {
@@ -51,7 +51,7 @@ struct MenuBarView: View {
 
             Spacer()
 
-            // 翻译引擎选择
+            // Translation engine selection
             Menu {
                 ForEach(TranslationEngine.allCases) { engine in
                     Button {
@@ -75,25 +75,25 @@ struct MenuBarView: View {
         }
     }
 
-    // MARK: - 功能模块
+    // MARK: - Feature Modules
 
     private var featureModules: some View {
         VStack(spacing: 4) {
-            // 划词翻译
+            // Translate selection
             FeatureRow(
                 icon: "character.book.closed",
                 iconColor: .blue,
-                title: "划词翻译",
-                subtitle: "⌥T 触发",
+                title: "Translate Selection",
+                subtitle: "⌥T to trigger",
                 action: {}
             )
 
-            // 截图 OCR
+            // Screenshot OCR
             FeatureRow(
                 icon: "camera.viewfinder",
                 iconColor: .orange,
-                title: "截图 OCR",
-                subtitle: "\(appState.screenshots.count) 张截图",
+                title: "Screenshot OCR",
+                subtitle: "\(appState.screenshots.count) screenshots",
                 action: {
                     Task {
                         await appState.captureScreenshot()
@@ -101,12 +101,12 @@ struct MenuBarView: View {
                 }
             )
 
-            // 收藏管理
+            // Collection management
             FeatureRow(
                 icon: "star.fill",
                 iconColor: .yellow,
-                title: "收藏管理",
-                subtitle: "\(appState.collections.count) 个收藏",
+                title: "Collections",
+                subtitle: "\(appState.collections.count) items",
                 action: {
                     NSApp.activate(ignoringOtherApps: true)
                 }
@@ -114,11 +114,11 @@ struct MenuBarView: View {
         }
     }
 
-    // MARK: - 底部区域
+    // MARK: - Bottom Section
 
     private var bottomSection: some View {
         HStack {
-            Button("设置...") {
+            Button("Settings...") {
                 NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
             }
             .buttonStyle(.plain)
@@ -126,7 +126,7 @@ struct MenuBarView: View {
 
             Spacer()
 
-            Button("退出") {
+            Button("Quit") {
                 NSApplication.shared.terminate(nil)
             }
             .buttonStyle(.plain)
@@ -136,7 +136,7 @@ struct MenuBarView: View {
     }
 }
 
-// MARK: - 功能行组件
+// MARK: - Feature Row Component
 
 struct FeatureRow: View {
     let icon: String

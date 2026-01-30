@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// 设置视图
+/// Settings View
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
 
@@ -15,34 +15,34 @@ struct SettingsView: View {
         TabView {
             GeneralSettingsView()
                 .tabItem {
-                    Label("通用", systemImage: "gearshape")
+                    Label("General", systemImage: "gearshape")
                 }
 
             TranslationSettingsView()
                 .tabItem {
-                    Label("翻译", systemImage: "character.book.closed")
+                    Label("Translation", systemImage: "character.book.closed")
                 }
 
             ShortcutsSettingsView()
                 .tabItem {
-                    Label("快捷键", systemImage: "keyboard")
+                    Label("Shortcuts", systemImage: "keyboard")
                 }
 
             StorageSettingsView()
                 .tabItem {
-                    Label("存储", systemImage: "externaldrive")
+                    Label("Storage", systemImage: "externaldrive")
                 }
 
             AboutSettingsView()
                 .tabItem {
-                    Label("关于", systemImage: "info.circle")
+                    Label("About", systemImage: "info.circle")
                 }
         }
         .frame(width: 500, height: 350)
     }
 }
 
-// MARK: - 通用设置
+// MARK: - General Settings
 
 struct GeneralSettingsView: View {
     @AppStorage("launchAtLogin") private var launchAtLogin = false
@@ -51,8 +51,8 @@ struct GeneralSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Toggle("开机自启动", isOn: $launchAtLogin)
-                Toggle("显示 Dock 图标", isOn: $showDockIcon)
+                Toggle("Launch at Login", isOn: $launchAtLogin)
+                Toggle("Show Dock Icon", isOn: $showDockIcon)
             }
         }
         .formStyle(.grouped)
@@ -60,7 +60,7 @@ struct GeneralSettingsView: View {
     }
 }
 
-// MARK: - 翻译设置
+// MARK: - Translation Settings
 
 struct TranslationSettingsView: View {
     @ObservedObject private var translationManager = TranslationServiceManager.shared
@@ -68,8 +68,8 @@ struct TranslationSettingsView: View {
 
     var body: some View {
         Form {
-            Section("默认翻译引擎") {
-                Picker("引擎", selection: Binding(
+            Section("Default Translation Engine") {
+                Picker("Engine", selection: Binding(
                     get: { translationManager.currentEngine },
                     set: { translationManager.setEngine($0) }
                 )) {
@@ -80,15 +80,15 @@ struct TranslationSettingsView: View {
                 .pickerStyle(.radioGroup)
             }
 
-            Section("目标语言") {
-                Picker("翻译为", selection: $translationManager.targetLanguage) {
+            Section("Target Language") {
+                Picker("Translate to", selection: $translationManager.targetLanguage) {
                     ForEach(Language.allCases.filter { $0 != .auto }) { lang in
                         Text(lang.displayName).tag(lang)
                     }
                 }
             }
 
-            Section("API 密钥") {
+            Section("API Keys") {
                 HStack {
                     if showApiKey {
                         TextField("DeepSeek API Key", text: $translationManager.deepSeekApiKey)
@@ -106,15 +106,15 @@ struct TranslationSettingsView: View {
                 SecureField("OpenAI API Key", text: $translationManager.openAIApiKey)
                 SecureField("DeepL API Key", text: $translationManager.deepLApiKey)
 
-                Text("API Key 安全地存储在本地，不会上传到任何服务器")
+                Text("API Keys are stored securely on your device and never uploaded to any server")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
 
             Section {
-                Link("获取 DeepSeek API Key", destination: URL(string: "https://platform.deepseek.com/api_keys")!)
-                Link("获取 OpenAI API Key", destination: URL(string: "https://platform.openai.com/api-keys")!)
-                Link("获取 DeepL API Key", destination: URL(string: "https://www.deepl.com/pro-api")!)
+                Link("Get DeepSeek API Key", destination: URL(string: "https://platform.deepseek.com/api_keys")!)
+                Link("Get OpenAI API Key", destination: URL(string: "https://platform.openai.com/api-keys")!)
+                Link("Get DeepL API Key", destination: URL(string: "https://www.deepl.com/pro-api")!)
             }
         }
         .formStyle(.grouped)
@@ -122,14 +122,14 @@ struct TranslationSettingsView: View {
     }
 }
 
-// MARK: - 快捷键设置
+// MARK: - Shortcuts Settings
 
 struct ShortcutsSettingsView: View {
     var body: some View {
         Form {
-            Section("全局快捷键") {
+            Section("Global Shortcuts") {
                 HStack {
-                    Text("划词翻译")
+                    Text("Translate Selection")
                     Spacer()
                     Text("⌥T")
                         .padding(.horizontal, 8)
@@ -139,7 +139,7 @@ struct ShortcutsSettingsView: View {
                 }
 
                 HStack {
-                    Text("截图 OCR")
+                    Text("Screenshot OCR")
                     Spacer()
                     Text("⌥S")
                         .padding(.horizontal, 8)
@@ -149,7 +149,7 @@ struct ShortcutsSettingsView: View {
                 }
 
                 HStack {
-                    Text("快速收藏")
+                    Text("Quick Collect")
                     Spacer()
                     Text("⌥C")
                         .padding(.horizontal, 8)
@@ -164,22 +164,22 @@ struct ShortcutsSettingsView: View {
     }
 }
 
-// MARK: - 存储设置
+// MARK: - Storage Settings
 
 struct StorageSettingsView: View {
     var body: some View {
         Form {
-            Section("数据存储") {
+            Section("Data Storage") {
                 HStack {
-                    Text("截图存储位置")
+                    Text("Screenshot Location")
                     Spacer()
                     Text("~/Pictures/Gleam")
                         .foregroundColor(.secondary)
-                    Button("更改...") {}
+                    Button("Change...") {}
                 }
 
                 HStack {
-                    Text("数据库大小")
+                    Text("Database Size")
                     Spacer()
                     Text("0 MB")
                         .foregroundColor(.secondary)
@@ -187,8 +187,8 @@ struct StorageSettingsView: View {
             }
 
             Section {
-                Button("清理缓存") {}
-                Button("导出数据...") {}
+                Button("Clear Cache") {}
+                Button("Export Data...") {}
             }
         }
         .formStyle(.grouped)
@@ -196,7 +196,7 @@ struct StorageSettingsView: View {
     }
 }
 
-// MARK: - 关于
+// MARK: - About
 
 struct AboutSettingsView: View {
     var body: some View {
@@ -213,17 +213,17 @@ struct AboutSettingsView: View {
                 .font(.title)
                 .fontWeight(.bold)
 
-            Text("版本 1.0.0")
+            Text("Version 1.0.0")
                 .foregroundColor(.secondary)
 
-            Text("一款优雅的 macOS 效率工具")
+            Text("An elegant macOS productivity tool")
                 .font(.body)
                 .foregroundColor(.secondary)
 
             Divider()
                 .frame(width: 200)
 
-            Text("划词翻译 · 截图 OCR · 收藏管理")
+            Text("Translation · Screenshot OCR · Collection Management")
                 .font(.caption)
                 .foregroundColor(.secondary.opacity(0.7))
         }

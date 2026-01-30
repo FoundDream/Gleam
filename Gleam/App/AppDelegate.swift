@@ -14,26 +14,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var collectionPanel: NSPanel?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // 保持 Dock 图标可见
+        // Keep Dock icon visible
         NSApp.setActivationPolicy(.regular)
 
-        // 检查辅助功能权限
+        // Check accessibility permission
         checkAccessibilityPermission()
 
-        // 初始化数据库
+        // Initialize database
         _ = DatabaseManager.shared
 
-        // 注册全局快捷键
+        // Register global hotkeys
         setupHotkeys()
 
-        print("Gleam 启动完成")
+        print("Gleam launched successfully")
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         HotkeyService.shared.unregisterHotkeys()
     }
 
-    // MARK: - 权限检查
+    // MARK: - Permission Check
 
     private func checkAccessibilityPermission() {
         if !AccessibilityService.shared.hasAccessibilityPermission {
@@ -41,24 +41,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    // MARK: - 快捷键设置
+    // MARK: - Hotkey Setup
 
     private func setupHotkeys() {
         let hotkeyService = HotkeyService.shared
 
-        // 划词翻译 ⌥T
+        // Translate selection ⌥T
         hotkeyService.onTranslationHotkey = { [weak self] in
             self?.handleTranslationHotkey()
         }
 
-        // 截图 OCR ⌥S
+        // Screenshot OCR ⌥S
         hotkeyService.onScreenshotHotkey = {
             Task { @MainActor in
                 await AppState.shared.captureScreenshot()
             }
         }
 
-        // 快速收藏 ⌥C
+        // Quick collect ⌥C
         hotkeyService.onCollectionHotkey = { [weak self] in
             self?.handleCollectionHotkey()
         }
@@ -66,12 +66,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         hotkeyService.registerHotkeys()
     }
 
-    // MARK: - 翻译处理
+    // MARK: - Translation Handling
 
     private func handleTranslationHotkey() {
         guard let selectedText = AccessibilityService.shared.getSelectedText(),
               !selectedText.isEmpty else {
-            print("没有选中文本")
+            print("No text selected")
             return
         }
 
@@ -79,11 +79,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showTranslationPanel(for text: String) {
-        // 关闭现有面板
+        // Close existing panel
         translationPanel?.close()
         translationPanel = nil
 
-        // 创建翻译视图
+        // Create translation view
         let contentView = TranslationPopoverView(
             originalText: text,
             onTranslationComplete: { original, translated, engine in
@@ -97,7 +97,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         let hostingView = NSHostingView(rootView: contentView)
 
-        // 创建浮窗
+        // Create floating panel
         let panel = GleamPanel(
             contentRect: NSRect(x: 0, y: 0, width: 380, height: 220),
             styleMask: [.titled, .closable, .fullSizeContentView],
@@ -128,12 +128,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         translationPanel = nil
     }
 
-    // MARK: - 收藏处理
+    // MARK: - Collection Handling
 
     private func handleCollectionHotkey() {
         guard let selectedText = AccessibilityService.shared.getSelectedText(),
               !selectedText.isEmpty else {
-            print("没有选中文本")
+            print("No text selected")
             return
         }
 
@@ -141,11 +141,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showCollectionPanel(for text: String) {
-        // 关闭现有面板
+        // Close existing panel
         collectionPanel?.close()
         collectionPanel = nil
 
-        // 创建收藏视图
+        // Create collection view
         let contentView = QuickCollectView(
             initialText: text,
             onSave: { title, content, tags in
@@ -164,7 +164,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         let hostingView = NSHostingView(rootView: contentView)
 
-        // 创建浮窗
+        // Create floating panel
         let panel = GleamPanel(
             contentRect: NSRect(x: 0, y: 0, width: 340, height: 280),
             styleMask: [.titled, .closable, .fullSizeContentView],
@@ -195,7 +195,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         collectionPanel = nil
     }
 
-    // MARK: - 辅助方法
+    // MARK: - Helper Methods
 
     private func positionPanel(_ panel: NSPanel, width: CGFloat, height: CGFloat) {
         let mouseLocation = NSEvent.mouseLocation
@@ -204,7 +204,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         var x = mouseLocation.x - width / 2
         var y = mouseLocation.y - height - 20
 
-        // 确保窗口不超出屏幕
+        // Ensure window doesn't exceed screen bounds
         x = max(screenFrame.minX + 10, min(x, screenFrame.maxX - width - 10))
         y = max(screenFrame.minY + 10, min(y, screenFrame.maxY - height - 10))
 
@@ -212,7 +212,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-// MARK: - 自定义面板
+// MARK: - Custom Panel
 
 class GleamPanel: NSPanel {
     var onClose: (() -> Void)?

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// 翻译浮窗视图
+/// Translation Popover View
 struct TranslationPopoverView: View {
     let originalText: String
     var onTranslationComplete: ((String, String, TranslationEngine) -> Void)?
@@ -20,7 +20,7 @@ struct TranslationPopoverView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // 头部带关闭按钮
+            // Header with close button
             HStack {
                 Image(systemName: "sparkles")
                     .foregroundStyle(.linearGradient(
@@ -28,7 +28,7 @@ struct TranslationPopoverView: View {
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ))
-                Text("Gleam 翻译")
+                Text("Gleam Translation")
                     .font(.headline)
                     .fontWeight(.medium)
 
@@ -42,15 +42,15 @@ struct TranslationPopoverView: View {
                         .foregroundColor(.secondary)
                 }
                 .buttonStyle(.plain)
-                .help("关闭 (ESC)")
+                .help("Close (ESC)")
             }
 
             Divider()
 
-            // 原文
+            // Original text
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text("原文")
+                    Text("Original")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Spacer()
@@ -62,7 +62,7 @@ struct TranslationPopoverView: View {
                     }
                     .buttonStyle(.plain)
                     .foregroundColor(.secondary)
-                    .help("复制原文")
+                    .help("Copy original")
                 }
 
                 Text(originalText)
@@ -73,16 +73,16 @@ struct TranslationPopoverView: View {
 
             Divider()
 
-            // 译文
+            // Translated text
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text("译文")
+                    Text("Translation")
                         .font(.caption)
                         .foregroundColor(.secondary)
 
                     Spacer()
 
-                    // 引擎选择
+                    // Engine selection
                     Menu {
                         ForEach(TranslationEngine.allCases) { engine in
                             Button {
@@ -122,14 +122,14 @@ struct TranslationPopoverView: View {
                     .buttonStyle(.plain)
                     .foregroundColor(.secondary)
                     .disabled(isLoading || translatedText.isEmpty)
-                    .help("复制译文")
+                    .help("Copy translation")
                 }
 
                 if isLoading {
                     HStack(spacing: 8) {
                         ProgressView()
                             .scaleEffect(0.7)
-                        Text("正在使用 \(translationManager.currentEngine.rawValue) 翻译...")
+                        Text("Translating with \(translationManager.currentEngine.rawValue)...")
                             .font(.body)
                             .foregroundColor(.secondary)
                     }
@@ -145,7 +145,7 @@ struct TranslationPopoverView: View {
                         }
 
                         if error.contains("API Key") || error.contains("hostname") {
-                            Button("打开设置") {
+                            Button("Open Settings") {
                                 NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
                                 onClose?()
                             }
@@ -160,7 +160,7 @@ struct TranslationPopoverView: View {
                 }
             }
 
-            // 底部：目标语言和重试按钮
+            // Footer: target language and retry button
             HStack {
                 Text("→ \(translationManager.targetLanguage.displayName)")
                     .font(.caption2)
@@ -168,7 +168,7 @@ struct TranslationPopoverView: View {
 
                 Spacer()
 
-                // 重新翻译按钮
+                // Retry translation button
                 if !isLoading {
                     Button {
                         Task {
@@ -180,7 +180,7 @@ struct TranslationPopoverView: View {
                     }
                     .buttonStyle(.plain)
                     .foregroundColor(.secondary)
-                    .help("重新翻译")
+                    .help("Retry translation")
                 }
             }
         }
@@ -201,7 +201,7 @@ struct TranslationPopoverView: View {
             let result = try await translationManager.translate(text: originalText)
             translatedText = result.translatedText
 
-            // 通知翻译完成（用于保存历史记录）
+            // Notify translation complete (for saving history)
             onTranslationComplete?(originalText, translatedText, result.engine)
         } catch {
             errorMessage = error.localizedDescription

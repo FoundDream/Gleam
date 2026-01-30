@@ -8,24 +8,24 @@
 import SwiftUI
 import Combine
 
-/// 全局应用状态管理
+/// Global App State Management
 @MainActor
 class AppState: ObservableObject {
-    /// 全局共享实例
+    /// Global shared instance
     static let shared = AppState()
 
-    // MARK: - 翻译模块
+    // MARK: - Translation Module
     @Published var selectedTranslationEngine: TranslationEngine = .deepSeek
     @Published var isTranslating: Bool = false
     @Published var translationHistory: [TranslationRecord] = []
 
-    // MARK: - 截图模块
+    // MARK: - Screenshot Module
     @Published var screenshots: [ScreenshotItem] = []
 
-    // MARK: - 收藏模块
+    // MARK: - Collection Module
     @Published var collections: [CollectionItem] = []
 
-    // MARK: - UI 状态
+    // MARK: - UI State
     @Published var selectedTab: SidebarTab = .collections
     @Published var searchText: String = ""
     @Published var showNewCollectionSheet: Bool = false
@@ -38,18 +38,18 @@ class AppState: ObservableObject {
         loadData()
     }
 
-    // MARK: - 数据加载
+    // MARK: - Data Loading
 
     private func loadData() {
-        // 从数据库加载数据
+        // Load data from database
         collections = db.fetchAllCollections()
         screenshots = db.fetchAllScreenshots()
         translationHistory = db.fetchAllTranslations()
 
-        print("已加载 \(collections.count) 个收藏, \(screenshots.count) 张截图, \(translationHistory.count) 条翻译记录")
+        print("Loaded \(collections.count) collections, \(screenshots.count) screenshots, \(translationHistory.count) translation records")
     }
 
-    // MARK: - 收藏操作
+    // MARK: - Collection Operations
 
     func addCollection(type: CollectionType, title: String, content: String, url: String? = nil, tags: [String] = []) {
         let item = CollectionItem(
@@ -63,19 +63,19 @@ class AppState: ObservableObject {
             updatedAt: Date()
         )
 
-        // 保存到数据库
+        // Save to database
         if db.insertCollection(item) {
             collections.insert(item, at: 0)
-            print("收藏已保存: \(title)")
+            print("Collection saved: \(title)")
         } else {
-            print("保存收藏失败: \(title)")
+            print("Failed to save collection: \(title)")
         }
     }
 
     func deleteCollection(id: UUID) {
         if db.deleteCollection(id: id) {
             collections.removeAll { $0.id == id }
-            print("收藏已删除")
+            print("Collection deleted")
         }
     }
 
@@ -86,30 +86,30 @@ class AppState: ObservableObject {
                 updated.updatedAt = Date()
                 collections[index] = updated
             }
-            print("收藏已更新: \(item.title)")
+            print("Collection updated: \(item.title)")
         }
     }
 
-    // MARK: - 截图操作
+    // MARK: - Screenshot Operations
 
     func captureScreenshot() async {
         do {
             let item = try await ScreenshotService.shared.captureScreenshot()
 
-            // 保存到数据库
+            // Save to database
             if db.insertScreenshot(item) {
                 screenshots.insert(item, at: 0)
-                print("截图已保存: \(item.imagePath)")
+                print("Screenshot saved: \(item.imagePath)")
             }
         } catch {
-            print("截图失败: \(error)")
+            print("Screenshot failed: \(error)")
         }
     }
 
     func deleteScreenshot(id: UUID) {
-        // 获取图片路径用于删除文件
+        // Get image path for file deletion
         if let item = screenshots.first(where: { $0.id == id }) {
-            // 删除图片文件
+            // Delete image file
             if !item.imagePath.isEmpty {
                 try? FileManager.default.removeItem(atPath: item.imagePath)
             }
@@ -117,11 +117,11 @@ class AppState: ObservableObject {
 
         if db.deleteScreenshot(id: id) {
             screenshots.removeAll { $0.id == id }
-            print("截图已删除")
+            print("Screenshot deleted")
         }
     }
 
-    // MARK: - 翻译历史操作
+    // MARK: - Translation History Operations
 
     func addTranslationRecord(original: String, translated: String, engine: TranslationEngine) {
         let record = TranslationRecord(
@@ -134,7 +134,7 @@ class AppState: ObservableObject {
 
         if db.insertTranslation(record) {
             translationHistory.insert(record, at: 0)
-            // 保持最多 100 条记录
+            // Keep max 100 records
             if translationHistory.count > 100 {
                 translationHistory = Array(translationHistory.prefix(100))
             }
@@ -144,11 +144,11 @@ class AppState: ObservableObject {
     func clearTranslationHistory() {
         if db.clearTranslationHistory() {
             translationHistory.removeAll()
-            print("翻译历史已清空")
+            print("Translation history cleared")
         }
     }
 
-    // MARK: - 搜索
+    // MARK: - Search
 
     var filteredCollections: [CollectionItem] {
         if searchText.isEmpty {
@@ -171,12 +171,12 @@ class AppState: ObservableObject {
     }
 }
 
-// MARK: - 侧边栏选项
+// MARK: - Sidebar Options
 
 enum SidebarTab: String, CaseIterable, Identifiable {
-    case collections = "收藏"
-    case screenshots = "截图"
-    case translationHistory = "翻译历史"
+    case collections = "Collections"
+    case screenshots = "Screenshots"
+    case translationHistory = "Translation History"
 
     var id: String { rawValue }
 
@@ -189,7 +189,7 @@ enum SidebarTab: String, CaseIterable, Identifiable {
     }
 }
 
-// MARK: - 翻译记录
+// MARK: - Translation Record
 
 struct TranslationRecord: Identifiable {
     let id: UUID
@@ -199,7 +199,7 @@ struct TranslationRecord: Identifiable {
     let timestamp: Date
 }
 
-// MARK: - 翻译引擎枚举
+// MARK: - Translation Engine Enum
 
 enum TranslationEngine: String, CaseIterable, Identifiable {
     case deepSeek = "DeepSeek"

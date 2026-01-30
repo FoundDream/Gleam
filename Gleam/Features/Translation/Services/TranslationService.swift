@@ -8,12 +8,12 @@
 import Foundation
 import Combine
 
-/// 翻译服务协议
+/// Translation Service Protocol
 protocol TranslationServiceProtocol {
     func translate(text: String, from: Language, to: Language) async throws -> TranslationResult
 }
 
-/// 翻译结果
+/// Translation Result
 struct TranslationResult {
     let originalText: String
     let translatedText: String
@@ -23,7 +23,7 @@ struct TranslationResult {
     let timestamp: Date
 }
 
-/// 支持的语言
+/// Supported Languages
 enum Language: String, CaseIterable, Identifiable {
     case auto = "auto"
     case english = "en"
@@ -38,14 +38,14 @@ enum Language: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .auto: return "自动检测"
-        case .english: return "英语"
-        case .chinese: return "中文"
-        case .japanese: return "日语"
-        case .korean: return "韩语"
-        case .french: return "法语"
-        case .german: return "德语"
-        case .spanish: return "西班牙语"
+        case .auto: return "Auto Detect"
+        case .english: return "English"
+        case .chinese: return "Chinese"
+        case .japanese: return "Japanese"
+        case .korean: return "Korean"
+        case .french: return "French"
+        case .german: return "German"
+        case .spanish: return "Spanish"
         }
     }
 
@@ -53,17 +53,17 @@ enum Language: String, CaseIterable, Identifiable {
         switch self {
         case .auto: return "Auto"
         case .english: return "English"
-        case .chinese: return "中文"
-        case .japanese: return "日本語"
-        case .korean: return "한국어"
-        case .french: return "Français"
-        case .german: return "Deutsch"
-        case .spanish: return "Español"
+        case .chinese: return "Chinese"
+        case .japanese: return "Japanese"
+        case .korean: return "Korean"
+        case .french: return "French"
+        case .german: return "German"
+        case .spanish: return "Spanish"
         }
     }
 }
 
-/// 翻译错误
+/// Translation Error
 enum TranslationError: Error, LocalizedError {
     case noApiKey
     case networkError(String)
@@ -74,27 +74,27 @@ enum TranslationError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noApiKey:
-            return "请先在设置中配置 API Key"
+            return "Please configure API Key in Settings first"
         case .networkError(let message):
-            return "网络错误: \(message)"
+            return "Network error: \(message)"
         case .apiError(let message):
-            return "API 错误: \(message)"
+            return "API error: \(message)"
         case .invalidResponse:
-            return "无效的响应"
+            return "Invalid response"
         case .unsupportedEngine:
-            return "暂不支持该翻译引擎"
+            return "This translation engine is not supported yet"
         }
     }
 }
 
-/// 翻译服务管理器
+/// Translation Service Manager
 @MainActor
 class TranslationServiceManager: ObservableObject {
     static let shared = TranslationServiceManager()
 
     @Published var currentEngine: TranslationEngine = .deepSeek
 
-    // API Keys (从 UserDefaults 加载)
+    // API Keys (loaded from UserDefaults)
     @Published var deepSeekApiKey: String {
         didSet { UserDefaults.standard.set(deepSeekApiKey, forKey: "deepSeekApiKey") }
     }
@@ -105,7 +105,7 @@ class TranslationServiceManager: ObservableObject {
         didSet { UserDefaults.standard.set(deepLApiKey, forKey: "deepLApiKey") }
     }
 
-    // 目标语言设置
+    // Target language setting
     @Published var targetLanguage: Language {
         didSet { UserDefaults.standard.set(targetLanguage.rawValue, forKey: "targetLanguage") }
     }

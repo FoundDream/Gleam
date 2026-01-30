@@ -8,7 +8,7 @@
 import Foundation
 import SQLite3
 
-/// 数据库管理器
+/// Database Manager
 class DatabaseManager {
     static let shared = DatabaseManager()
 
@@ -16,19 +16,19 @@ class DatabaseManager {
     let dbPath: String
 
     private init() {
-        // 获取应用支持目录
+        // Get application support directory
         let fileManager = FileManager.default
         let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let gleamDir = appSupport.appendingPathComponent("Gleam")
 
-        // 创建目录
+        // Create directory
         try? fileManager.createDirectory(at: gleamDir, withIntermediateDirectories: true)
 
         dbPath = gleamDir.appendingPathComponent("gleam.db").path
         openDatabase()
         createTables()
 
-        print("数据库路径: \(dbPath)")
+        print("Database path: \(dbPath)")
     }
 
     deinit {
@@ -39,13 +39,13 @@ class DatabaseManager {
 
     private func openDatabase() {
         if sqlite3_open(dbPath, &db) != SQLITE_OK {
-            print("无法打开数据库: \(String(cString: sqlite3_errmsg(db)))")
+            print("Failed to open database: \(String(cString: sqlite3_errmsg(db)))")
         }
     }
 
     private func createTables() {
         let tables = [
-            // 收藏
+            // Collections
             """
             CREATE TABLE IF NOT EXISTS collections (
                 id TEXT PRIMARY KEY,
@@ -59,7 +59,7 @@ class DatabaseManager {
             )
             """,
 
-            // 截图
+            // Screenshots
             """
             CREATE TABLE IF NOT EXISTS screenshots (
                 id TEXT PRIMARY KEY,
@@ -69,7 +69,7 @@ class DatabaseManager {
             )
             """,
 
-            // 翻译历史
+            // Translation history
             """
             CREATE TABLE IF NOT EXISTS translation_history (
                 id TEXT PRIMARY KEY,
@@ -85,7 +85,7 @@ class DatabaseManager {
             var statement: OpaquePointer?
             if sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK {
                 if sqlite3_step(statement) != SQLITE_DONE {
-                    print("创建表失败: \(String(cString: sqlite3_errmsg(db)))")
+                    print("Failed to create table: \(String(cString: sqlite3_errmsg(db)))")
                 }
             }
             sqlite3_finalize(statement)
@@ -102,7 +102,7 @@ class DatabaseManager {
 
         var statement: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else {
-            print("准备语句失败: \(String(cString: sqlite3_errmsg(db)))")
+            print("Failed to prepare statement: \(String(cString: sqlite3_errmsg(db)))")
             return false
         }
 

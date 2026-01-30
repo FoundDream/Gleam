@@ -9,37 +9,37 @@ import Foundation
 import Carbon.HIToolbox
 import AppKit
 
-/// 全局快捷键服务
+/// Global Hotkey Service
 class HotkeyService {
     static let shared = HotkeyService()
 
     private var hotKeyRef: EventHotKeyRef?
     private var eventHandler: EventHandlerRef?
 
-    // 快捷键回调
+    // Hotkey callbacks
     var onTranslationHotkey: (() -> Void)?
     var onScreenshotHotkey: (() -> Void)?
     var onCollectionHotkey: (() -> Void)?
 
     private init() {}
 
-    /// 注册所有快捷键
+    /// Register all hotkeys
     func registerHotkeys() {
-        // 注册翻译快捷键 (Option + T)
+        // Register translation hotkey (Option + T)
         registerHotkey(
             id: 1,
             keyCode: UInt32(kVK_ANSI_T),
             modifiers: UInt32(optionKey)
         )
 
-        // 注册截图快捷键 (Option + S)
+        // Register screenshot hotkey (Option + S)
         registerHotkey(
             id: 2,
             keyCode: UInt32(kVK_ANSI_S),
             modifiers: UInt32(optionKey)
         )
 
-        // 注册收藏快捷键 (Option + C)
+        // Register collection hotkey (Option + C)
         registerHotkey(
             id: 3,
             keyCode: UInt32(kVK_ANSI_C),
@@ -49,7 +49,7 @@ class HotkeyService {
         setupEventHandler()
     }
 
-    /// 注销所有快捷键
+    /// Unregister all hotkeys
     func unregisterHotkeys() {
         if let ref = hotKeyRef {
             UnregisterEventHotKey(ref)
@@ -81,9 +81,9 @@ class HotkeyService {
         )
 
         if status == noErr {
-            print("快捷键 \(id) 注册成功")
+            print("Hotkey \(id) registered successfully")
         } else {
-            print("快捷键 \(id) 注册失败: \(status)")
+            print("Failed to register hotkey \(id): \(status)")
         }
     }
 

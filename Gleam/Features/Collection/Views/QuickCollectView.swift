@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// 快速收藏浮窗
+/// Quick Collect Popover
 struct QuickCollectView: View {
     let initialText: String
     var onSave: ((String, String, [String]) -> Void)?
@@ -20,11 +20,11 @@ struct QuickCollectView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // 头部
+            // Header
             HStack {
                 Image(systemName: "star.fill")
                     .foregroundColor(.yellow)
-                Text("快速收藏")
+                Text("Quick Collect")
                     .font(.headline)
                     .fontWeight(.medium)
 
@@ -41,12 +41,12 @@ struct QuickCollectView: View {
             }
 
             if isSaved {
-                // 保存成功状态
+                // Save success state
                 VStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 40))
                         .foregroundColor(.green)
-                    Text("已收藏")
+                    Text("Saved")
                         .font(.headline)
                 }
                 .frame(maxWidth: .infinity)
@@ -54,14 +54,14 @@ struct QuickCollectView: View {
             } else {
                 Divider()
 
-                // 标题
-                TextField("标题（可选）", text: $title)
+                // Title
+                TextField("Title (optional)", text: $title)
                     .textFieldStyle(.plain)
                     .font(.body)
 
-                // 内容
+                // Content
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("内容")
+                    Text("Content")
                         .font(.caption)
                         .foregroundColor(.secondary)
 
@@ -74,23 +74,23 @@ struct QuickCollectView: View {
                         .cornerRadius(6)
                 }
 
-                // 标签
-                TextField("标签（用逗号分隔）", text: $tagsInput)
+                // Tags
+                TextField("Tags (comma separated)", text: $tagsInput)
                     .textFieldStyle(.plain)
                     .font(.caption)
 
                 Divider()
 
-                // 按钮
+                // Buttons
                 HStack {
-                    Button("取消") {
+                    Button("Cancel") {
                         onClose?()
                     }
                     .keyboardShortcut(.cancelAction)
 
                     Spacer()
 
-                    Button("收藏") {
+                    Button("Save") {
                         saveCollection()
                     }
                     .keyboardShortcut(.defaultAction)
@@ -104,7 +104,7 @@ struct QuickCollectView: View {
         .cornerRadius(12)
         .onAppear {
             content = initialText
-            // 自动生成标题
+            // Auto-generate title
             let firstLine = initialText.components(separatedBy: .newlines).first ?? initialText
             if firstLine.count > 30 {
                 title = String(firstLine.prefix(30)) + "..."
@@ -120,16 +120,16 @@ struct QuickCollectView: View {
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
 
-        let finalTitle = title.isEmpty ? "未命名收藏" : title
+        let finalTitle = title.isEmpty ? "Untitled Collection" : title
 
         onSave?(finalTitle, content, tags)
 
-        // 显示成功状态
+        // Show success state
         withAnimation {
             isSaved = true
         }
 
-        // 1秒后自动关闭
+        // Auto-close after 1 second
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             onClose?()
         }
@@ -137,6 +137,6 @@ struct QuickCollectView: View {
 }
 
 #Preview {
-    QuickCollectView(initialText: "这是一段要收藏的文字内容")
+    QuickCollectView(initialText: "This is some text content to collect")
         .padding()
 }

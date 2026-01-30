@@ -13,7 +13,7 @@ struct GleamApp: App {
     @StateObject private var appState = AppState.shared
 
     var body: some Scene {
-        // 主窗口
+        // Main window
         WindowGroup {
             MainWindowView()
                 .environmentObject(appState)
@@ -22,14 +22,14 @@ struct GleamApp: App {
         .windowToolbarStyle(.unified)
         .defaultSize(width: 1000, height: 700)
         .commands {
-            // 自定义菜单命令
+            // Custom menu commands
             CommandGroup(after: .newItem) {
-                Button("新建收藏") {
+                Button("New Collection") {
                     appState.showNewCollectionSheet = true
                 }
                 .keyboardShortcut("n", modifiers: [.command])
 
-                Button("截图") {
+                Button("Screenshot") {
                     Task {
                         await appState.captureScreenshot()
                     }
@@ -38,7 +38,7 @@ struct GleamApp: App {
             }
         }
 
-        // 菜单栏图标
+        // Menu bar icon
         MenuBarExtra {
             MenuBarView()
                 .environmentObject(appState)
@@ -47,7 +47,7 @@ struct GleamApp: App {
         }
         .menuBarExtraStyle(.window)
 
-        // 设置窗口
+        // Settings window
         Settings {
             SettingsView()
                 .environmentObject(appState)
