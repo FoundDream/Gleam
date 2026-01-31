@@ -45,15 +45,11 @@ class DatabaseManager {
 
     private func createTables() {
         let tables = [
-            // Collections
+            // 随手记
             """
-            CREATE TABLE IF NOT EXISTS collections (
+            CREATE TABLE IF NOT EXISTS quick_notes (
                 id TEXT PRIMARY KEY,
-                type TEXT NOT NULL,
-                title TEXT NOT NULL,
                 content TEXT NOT NULL,
-                url TEXT,
-                tags TEXT,
                 created_at REAL NOT NULL,
                 updated_at REAL NOT NULL
             )
@@ -92,12 +88,12 @@ class DatabaseManager {
         }
     }
 
-    // MARK: - Collection CRUD
+    // MARK: - QuickNote CRUD
 
-    func insertCollection(_ item: CollectionItem) -> Bool {
+    func insertQuickNote(_ note: QuickNote) -> Bool {
         let sql = """
-            INSERT INTO collections (id, type, title, content, url, tags, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO quick_notes (id, content, created_at, updated_at)
+            VALUES (?, ?, ?, ?)
         """
 
         var statement: OpaquePointer?
@@ -108,23 +104,17 @@ class DatabaseManager {
 
         defer { sqlite3_finalize(statement) }
 
-        let tagsJson = (try? JSONEncoder().encode(item.tags)).flatMap { String(data: $0, encoding: .utf8) } ?? "[]"
-
-        sqlite3_bind_text(statement, 1, item.id.uuidString, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-        sqlite3_bind_text(statement, 2, item.type.rawValue, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-        sqlite3_bind_text(statement, 3, item.title, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-        sqlite3_bind_text(statement, 4, item.content, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-        sqlite3_bind_text(statement, 5, item.url, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-        sqlite3_bind_text(statement, 6, tagsJson, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-        sqlite3_bind_double(statement, 7, item.createdAt.timeIntervalSince1970)
-        sqlite3_bind_double(statement, 8, item.updatedAt.timeIntervalSince1970)
+        sqlite3_bind_text(statement, 1, note.id.uuidString, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+        sqlite3_bind_text(statement, 2, note.content, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+        sqlite3_bind_double(statement, 3, note.createdAt.timeIntervalSince1970)
+        sqlite3_bind_double(statement, 4, note.updatedAt.timeIntervalSince1970)
 
         return sqlite3_step(statement) == SQLITE_DONE
     }
 
-    func updateCollection(_ item: CollectionItem) -> Bool {
+    func updateQuickNote(_ note: QuickNote) -> Bool {
         let sql = """
-            UPDATE collections SET type = ?, title = ?, content = ?, url = ?, tags = ?, updated_at = ?
+            UPDATE quick_notes SET content = ?, updated_at = ?
             WHERE id = ?
         """
 
@@ -132,21 +122,15 @@ class DatabaseManager {
         guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return false }
         defer { sqlite3_finalize(statement) }
 
-        let tagsJson = (try? JSONEncoder().encode(item.tags)).flatMap { String(data: $0, encoding: .utf8) } ?? "[]"
-
-        sqlite3_bind_text(statement, 1, item.type.rawValue, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-        sqlite3_bind_text(statement, 2, item.title, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-        sqlite3_bind_text(statement, 3, item.content, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-        sqlite3_bind_text(statement, 4, item.url, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-        sqlite3_bind_text(statement, 5, tagsJson, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-        sqlite3_bind_double(statement, 6, Date().timeIntervalSince1970)
-        sqlite3_bind_text(statement, 7, item.id.uuidString, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+        sqlite3_bind_text(statement, 1, note.content, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+        sqlite3_bind_double(statement, 2, Date().timeIntervalSince1970)
+        sqlite3_bind_text(statement, 3, note.id.uuidString, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
 
         return sqlite3_step(statement) == SQLITE_DONE
     }
 
-    func deleteCollection(id: UUID) -> Bool {
-        let sql = "DELETE FROM collections WHERE id = ?"
+    func deleteQuickNote(id: UUID) -> Bool {
+        let sql = "DELETE FROM quick_notes WHERE id = ?"
 
         var statement: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return false }
@@ -157,49 +141,39 @@ class DatabaseManager {
         return sqlite3_step(statement) == SQLITE_DONE
     }
 
-    func fetchAllCollections() -> [CollectionItem] {
-        let sql = "SELECT * FROM collections ORDER BY updated_at DESC"
+    func fetchAllQuickNotes() -> [QuickNote] {
+        let sql = "SELECT * FROM quick_notes ORDER BY updated_at DESC"
 
         var statement: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return [] }
         defer { sqlite3_finalize(statement) }
 
-        var items: [CollectionItem] = []
+        var notes: [QuickNote] = []
 
         while sqlite3_step(statement) == SQLITE_ROW {
-            if let item = parseCollection(statement: statement) {
-                items.append(item)
+            if let note = parseQuickNote(statement: statement) {
+                notes.append(note)
             }
         }
 
-        return items
+        return notes
     }
 
-    private func parseCollection(statement: OpaquePointer?) -> CollectionItem? {
+    private func parseQuickNote(statement: OpaquePointer?) -> QuickNote? {
         guard let statement = statement else { return nil }
 
         guard let idStr = sqlite3_column_text(statement, 0),
               let id = UUID(uuidString: String(cString: idStr)),
-              let typeStr = sqlite3_column_text(statement, 1),
-              let type = CollectionType(rawValue: String(cString: typeStr)),
-              let titleStr = sqlite3_column_text(statement, 2),
-              let contentStr = sqlite3_column_text(statement, 3) else {
+              let contentStr = sqlite3_column_text(statement, 1) else {
             return nil
         }
 
-        let url = sqlite3_column_text(statement, 4).map { String(cString: $0) }
-        let tagsJson = sqlite3_column_text(statement, 5).map { String(cString: $0) } ?? "[]"
-        let tags = (try? JSONDecoder().decode([String].self, from: tagsJson.data(using: .utf8)!)) ?? []
-        let createdAt = Date(timeIntervalSince1970: sqlite3_column_double(statement, 6))
-        let updatedAt = Date(timeIntervalSince1970: sqlite3_column_double(statement, 7))
+        let createdAt = Date(timeIntervalSince1970: sqlite3_column_double(statement, 2))
+        let updatedAt = Date(timeIntervalSince1970: sqlite3_column_double(statement, 3))
 
-        return CollectionItem(
+        return QuickNote(
             id: id,
-            type: type,
-            title: String(cString: titleStr),
             content: String(cString: contentStr),
-            url: url,
-            tags: tags,
             createdAt: createdAt,
             updatedAt: updatedAt
         )

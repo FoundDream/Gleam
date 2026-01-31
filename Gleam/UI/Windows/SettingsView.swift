@@ -223,7 +223,7 @@ struct AboutSettingsView: View {
             Divider()
                 .frame(width: 200)
 
-            Text("Translation · Screenshot OCR · Collection Management")
+            Text("划词翻译 · 截图 OCR · 随手记")
                 .font(.caption)
                 .foregroundColor(.secondary.opacity(0.7))
         }

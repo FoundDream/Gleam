@@ -11,7 +11,7 @@ import Carbon.HIToolbox
 class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var translationPanel: NSPanel?
-    private var collectionPanel: NSPanel?
+    private var quickNotePanel: NSPanel?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Keep Dock icon visible
@@ -58,9 +58,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
-        // Quick collect ⌥C
-        hotkeyService.onCollectionHotkey = { [weak self] in
-            self?.handleCollectionHotkey()
+        // 随手记 ⌥C
+        hotkeyService.onQuickNoteHotkey = { [weak self] in
+            self?.handleQuickNoteHotkey()
         }
 
         hotkeyService.registerHotkeys()
@@ -128,45 +128,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         translationPanel = nil
     }
 
-    // MARK: - Collection Handling
+    // MARK: - QuickNote Handling (随手记)
 
-    private func handleCollectionHotkey() {
-        guard let selectedText = AccessibilityService.shared.getSelectedText(),
-              !selectedText.isEmpty else {
-            print("No text selected")
-            return
-        }
-
-        showCollectionPanel(for: selectedText)
+    private func handleQuickNoteHotkey() {
+        // 随手记不需要选中文字，直接打开输入窗口
+        showQuickNotePanel()
     }
 
-    private func showCollectionPanel(for text: String) {
+    private func showQuickNotePanel() {
         // Close existing panel
-        collectionPanel?.close()
-        collectionPanel = nil
+        quickNotePanel?.close()
+        quickNotePanel = nil
 
-        // Create collection view
-        let contentView = QuickCollectView(
-            initialText: text,
-            onSave: { title, content, tags in
+        // Create quick note view
+        let contentView = QuickNoteView(
+            onSave: { content in
                 Task { @MainActor in
-                    AppState.shared.addCollection(
-                        type: .text,
-                        title: title,
-                        content: content,
-                        tags: tags
-                    )
+                    AppState.shared.addQuickNote(content: content)
                 }
             },
             onClose: { [weak self] in
-                self?.closeCollectionPanel()
+                self?.closeQuickNotePanel()
             }
         )
         let hostingView = NSHostingView(rootView: contentView)
 
         // Create floating panel
         let panel = GleamPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 340, height: 280),
+            contentRect: NSRect(x: 0, y: 0, width: 360, height: 220),
             styleMask: [.titled, .closable, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -182,17 +171,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         panel.hidesOnDeactivate = false
 
         panel.onClose = { [weak self] in
-            self?.collectionPanel = nil
+            self?.quickNotePanel = nil
         }
 
-        positionPanel(panel, width: 340, height: 280)
+        positionPanel(panel, width: 360, height: 220)
         panel.makeKeyAndOrderFront(nil)
-        collectionPanel = panel
+        quickNotePanel = panel
     }
 
-    func closeCollectionPanel() {
-        collectionPanel?.close()
-        collectionPanel = nil
+    func closeQuickNotePanel() {
+        quickNotePanel?.close()
+        quickNotePanel = nil
     }
 
     // MARK: - Helper Methods

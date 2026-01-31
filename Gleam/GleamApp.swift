@@ -24,12 +24,12 @@ struct GleamApp: App {
         .commands {
             // Custom menu commands
             CommandGroup(after: .newItem) {
-                Button("New Collection") {
-                    appState.showNewCollectionSheet = true
+                Button("新建随手记") {
+                    appState.showQuickNoteWindow = true
                 }
                 .keyboardShortcut("n", modifiers: [.command])
 
-                Button("Screenshot") {
+                Button("截图") {
                     Task {
                         await appState.captureScreenshot()
                     }

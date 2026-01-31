@@ -79,21 +79,21 @@ struct MenuBarView: View {
 
     private var featureModules: some View {
         VStack(spacing: 4) {
-            // Translate selection
+            // 划词翻译
             FeatureRow(
                 icon: "character.book.closed",
                 iconColor: .blue,
-                title: "Translate Selection",
-                subtitle: "⌥T to trigger",
+                title: "划词翻译",
+                subtitle: "⌥T 触发",
                 action: {}
             )
 
-            // Screenshot OCR
+            // 截图 OCR
             FeatureRow(
                 icon: "camera.viewfinder",
                 iconColor: .orange,
-                title: "Screenshot OCR",
-                subtitle: "\(appState.screenshots.count) screenshots",
+                title: "截图 OCR",
+                subtitle: "\(appState.screenshots.count) 张截图",
                 action: {
                     Task {
                         await appState.captureScreenshot()
@@ -101,14 +101,14 @@ struct MenuBarView: View {
                 }
             )
 
-            // Collection management
+            // 随手记
             FeatureRow(
-                icon: "star.fill",
+                icon: "note.text",
                 iconColor: .yellow,
-                title: "Collections",
-                subtitle: "\(appState.collections.count) items",
+                title: "随手记",
+                subtitle: "⌥C 快速记录 · \(appState.quickNotes.count) 条",
                 action: {
-                    NSApp.activate(ignoringOtherApps: true)
+                    appState.showQuickNoteWindow = true
                 }
             )
         }

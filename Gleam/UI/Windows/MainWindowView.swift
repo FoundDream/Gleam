@@ -18,9 +18,9 @@ struct MainWindowView: View {
             DetailView()
         }
         .navigationSplitViewStyle(.balanced)
-        .searchable(text: $appState.searchText, prompt: "Search collections, screenshots...")
-        .sheet(isPresented: $appState.showNewCollectionSheet) {
-            NewCollectionSheet()
+        .searchable(text: $appState.searchText, prompt: "搜索笔记、截图...")
+        .sheet(isPresented: $appState.showQuickNoteWindow) {
+            QuickNoteSheet()
         }
     }
 }
@@ -32,7 +32,7 @@ struct SidebarView: View {
 
     var body: some View {
         List(selection: $appState.selectedTab) {
-            Section("Content") {
+            Section("内容") {
                 ForEach(SidebarTab.allCases) { tab in
                     Label {
                         HStack {
@@ -54,7 +54,7 @@ struct SidebarView: View {
                 }
             }
 
-            Section("Tags") {
+            Section("标签") {
                 ForEach(allTags, id: \.self) { tag in
                     Label(tag, systemImage: "tag")
                         .foregroundColor(.secondary)
@@ -66,7 +66,7 @@ struct SidebarView: View {
         .toolbar {
             ToolbarItem {
                 Button {
-                    appState.showNewCollectionSheet = true
+                    appState.showQuickNoteWindow = true
                 } label: {
                     Image(systemName: "plus")
                 }
@@ -76,8 +76,8 @@ struct SidebarView: View {
 
     private func countFor(_ tab: SidebarTab) -> String {
         switch tab {
-        case .collections:
-            return "\(appState.collections.count)"
+        case .quickNotes:
+            return "\(appState.quickNotes.count)"
         case .screenshots:
             return "\(appState.screenshots.count)"
         case .translationHistory:
@@ -87,15 +87,14 @@ struct SidebarView: View {
 
     private func colorFor(_ tab: SidebarTab) -> Color {
         switch tab {
-        case .collections: return .yellow
-        case .screenshots: return .orange
+        case .quickNotes: return .orange
+        case .screenshots: return .purple
         case .translationHistory: return .blue
         }
     }
 
     private var allTags: [String] {
         var tags = Set<String>()
-        appState.collections.forEach { tags.formUnion($0.tags) }
         appState.screenshots.forEach { tags.formUnion($0.tags) }
         return Array(tags).sorted()
     }
@@ -108,8 +107,8 @@ struct DetailView: View {
 
     var body: some View {
         switch appState.selectedTab {
-        case .collections:
-            CollectionsView()
+        case .quickNotes:
+            QuickNotesView()
         case .screenshots:
             ScreenshotsView()
         case .translationHistory:
@@ -118,21 +117,21 @@ struct DetailView: View {
     }
 }
 
-// MARK: - Collections View
+// MARK: - QuickNotes View (随手记列表)
 
-struct CollectionsView: View {
+struct QuickNotesView: View {
     @EnvironmentObject var appState: AppState
-    @State private var selectedItem: CollectionItem?
+    @State private var selectedNote: QuickNote?
 
     var body: some View {
         HSplitView {
-            // List
+            // 列表
             ScrollView {
                 LazyVStack(spacing: 12) {
-                    ForEach(appState.filteredCollections) { item in
-                        CollectionCard(item: item, isSelected: selectedItem?.id == item.id)
+                    ForEach(appState.filteredQuickNotes) { note in
+                        QuickNoteCard(note: note, isSelected: selectedNote?.id == note.id)
                             .onTapGesture {
-                                selectedItem = item
+                                selectedNote = note
                             }
                     }
                 }
@@ -140,15 +139,15 @@ struct CollectionsView: View {
             }
             .frame(minWidth: 300)
 
-            // Detail
-            if let item = selectedItem {
-                CollectionDetailView(item: item)
+            // 详情
+            if let note = selectedNote {
+                QuickNoteDetailView(note: note)
                     .frame(minWidth: 300)
             } else {
                 EmptyDetailView(
-                    icon: "star",
-                    title: "Select a Collection",
-                    subtitle: "Click on the list to view details"
+                    icon: "note.text",
+                    title: "选择一条笔记",
+                    subtitle: "点击列表查看详情"
                 )
                 .frame(minWidth: 300)
             }
@@ -156,17 +155,15 @@ struct CollectionsView: View {
         .toolbar {
             ToolbarItemGroup {
                 Button {
-                    appState.showNewCollectionSheet = true
+                    appState.showQuickNoteWindow = true
                 } label: {
-                    Label("Add Collection", systemImage: "plus")
+                    Label("新建笔记", systemImage: "plus")
                 }
 
                 Spacer()
 
-                Picker("Sort", selection: .constant("date")) {
-                    Text("By Date").tag("date")
-                    Text("By Title").tag("title")
-                    Text("By Type").tag("type")
+                Picker("排序", selection: .constant("date")) {
+                    Text("按时间").tag("date")
                 }
                 .pickerStyle(.menu)
                 .frame(width: 100)
@@ -175,48 +172,34 @@ struct CollectionsView: View {
     }
 }
 
-// MARK: - Collection Card
+// MARK: - QuickNote Card (随手记卡片)
 
-struct CollectionCard: View {
-    let item: CollectionItem
+struct QuickNoteCard: View {
+    let note: QuickNote
     let isSelected: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Image(systemName: item.type.icon)
-                    .foregroundColor(item.type.color)
+                Image(systemName: "note.text")
+                    .foregroundColor(.orange)
                     .font(.title3)
 
-                Text(item.title)
+                Text(previewTitle)
                     .font(.headline)
                     .lineLimit(1)
 
                 Spacer()
 
-                Text(item.createdAt.formatted(.relative(presentation: .named)))
+                Text(note.createdAt.formatted(.relative(presentation: .named)))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
 
-            Text(item.content)
+            Text(note.content)
                 .font(.body)
                 .foregroundColor(.secondary)
-                .lineLimit(2)
-
-            if !item.tags.isEmpty {
-                HStack {
-                    ForEach(item.tags, id: \.self) { tag in
-                        Text(tag)
-                            .font(.caption)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(Color.blue.opacity(0.1))
-                            .foregroundColor(.blue)
-                            .cornerRadius(4)
-                    }
-                }
-            }
+                .lineLimit(3)
         }
         .padding()
         .background(
@@ -228,29 +211,39 @@ struct CollectionCard: View {
                 .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
         )
     }
+
+    private var previewTitle: String {
+        let firstLine = note.content.components(separatedBy: .newlines).first ?? note.content
+        if firstLine.count > 30 {
+            return String(firstLine.prefix(30)) + "..."
+        }
+        return firstLine
+    }
 }
 
-// MARK: - Collection Detail
+// MARK: - QuickNote Detail (随手记详情)
 
-struct CollectionDetailView: View {
-    let item: CollectionItem
+struct QuickNoteDetailView: View {
+    let note: QuickNote
     @EnvironmentObject var appState: AppState
+    @State private var isEditing = false
+    @State private var editedContent: String = ""
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                // Header
+                // 顶部工具栏
                 HStack {
-                    Image(systemName: item.type.icon)
+                    Image(systemName: "note.text")
                         .font(.largeTitle)
-                        .foregroundColor(item.type.color)
+                        .foregroundColor(.orange)
 
                     VStack(alignment: .leading) {
-                        Text(item.title)
+                        Text("随手记")
                             .font(.title2)
                             .fontWeight(.bold)
 
-                        Text("Created on \(item.createdAt.formatted())")
+                        Text("创建于 \(note.createdAt.formatted())")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -258,14 +251,17 @@ struct CollectionDetailView: View {
                     Spacer()
 
                     Menu {
-                        Button("Edit", systemImage: "pencil") {}
-                        Button("Copy", systemImage: "doc.on.doc") {
+                        Button("编辑", systemImage: "pencil") {
+                            editedContent = note.content
+                            isEditing = true
+                        }
+                        Button("复制", systemImage: "doc.on.doc") {
                             NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(item.content, forType: .string)
+                            NSPasteboard.general.setString(note.content, forType: .string)
                         }
                         Divider()
-                        Button("Delete", systemImage: "trash", role: .destructive) {
-                            appState.deleteCollection(id: item.id)
+                        Button("删除", systemImage: "trash", role: .destructive) {
+                            appState.deleteQuickNote(id: note.id)
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -276,43 +272,34 @@ struct CollectionDetailView: View {
 
                 Divider()
 
-                // Content
-                Text(item.content)
-                    .font(.body)
-                    .textSelection(.enabled)
-
-                // URL
-                if let url = item.url {
-                    Link(destination: URL(string: url)!) {
-                        HStack {
-                            Image(systemName: "link")
-                            Text(url)
-                                .lineLimit(1)
-                        }
-                        .padding()
-                        .background(Color.blue.opacity(0.1))
+                // 内容
+                if isEditing {
+                    TextEditor(text: $editedContent)
+                        .font(.body)
+                        .frame(minHeight: 200)
+                        .scrollContentBackground(.hidden)
+                        .padding(8)
+                        .background(Color(nsColor: .textBackgroundColor))
                         .cornerRadius(8)
-                    }
-                }
 
-                // Tags
-                if !item.tags.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Tags")
-                            .font(.headline)
-
-                        FlowLayout(spacing: 8) {
-                            ForEach(item.tags, id: \.self) { tag in
-                                Text(tag)
-                                    .font(.body)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(Color.blue.opacity(0.1))
-                                    .foregroundColor(.blue)
-                                    .cornerRadius(6)
-                            }
+                    HStack {
+                        Button("取消") {
+                            isEditing = false
                         }
+                        Spacer()
+                        Button("保存") {
+                            var updated = note
+                            updated.content = editedContent
+                            appState.updateQuickNote(updated)
+                            isEditing = false
+                        }
+                        .buttonStyle(.borderedProminent)
                     }
+                } else {
+                    Text(note.content)
+                        .font(.body)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             .padding()
@@ -525,8 +512,8 @@ struct TranslationHistoryView: View {
         if appState.translationHistory.isEmpty {
             EmptyDetailView(
                 icon: "clock.arrow.circlepath",
-                title: "No Translation History",
-                subtitle: "Use ⌥T to translate selected text"
+                title: "暂无翻译历史",
+                subtitle: "使用 ⌥T 划词翻译"
             )
         } else {
             List(appState.translationHistory) { record in
@@ -557,84 +544,78 @@ struct TranslationHistoryView: View {
     }
 }
 
-// MARK: - New Collection Sheet
+// MARK: - QuickNote Sheet (随手记弹窗)
 
-struct NewCollectionSheet: View {
+struct QuickNoteSheet: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) private var dismiss
 
-    @State private var type: CollectionType = .text
-    @State private var title: String = ""
     @State private var content: String = ""
-    @State private var url: String = ""
-    @State private var tagsInput: String = ""
+    @FocusState private var isFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
-            // Title bar
+            // 标题栏
             HStack {
-                Button("Cancel") {
+                Button("取消") {
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
 
                 Spacer()
 
-                Text("New Collection")
-                    .font(.headline)
+                HStack(spacing: 6) {
+                    Image(systemName: "note.text")
+                        .foregroundColor(.orange)
+                    Text("随手记")
+                        .font(.headline)
+                }
 
                 Spacer()
 
-                Button("Save") {
-                    saveCollection()
+                Button("保存") {
+                    saveNote()
                 }
                 .keyboardShortcut(.defaultAction)
-                .disabled(title.isEmpty || content.isEmpty)
+                .disabled(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             .padding()
 
             Divider()
 
-            // Form
-            Form {
-                Picker("Type", selection: $type) {
-                    ForEach(CollectionType.allCases, id: \.self) { t in
-                        Label(t.displayName, systemImage: t.icon).tag(t)
-                    }
-                }
+            // 内容输入
+            TextEditor(text: $content)
+                .font(.body)
+                .scrollContentBackground(.hidden)
+                .padding(12)
+                .focused($isFocused)
 
-                TextField("Title", text: $title)
+            Divider()
 
-                if type == .link {
-                    TextField("URL", text: $url)
-                }
-
-                Section("Content") {
-                    TextEditor(text: $content)
-                        .frame(minHeight: 100)
-                }
-
-                TextField("Tags (comma separated)", text: $tagsInput)
+            // 底部提示
+            HStack {
+                Text("⌘↩ 快速保存")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Spacer()
+                Text("\(content.count) 字")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
-            .formStyle(.grouped)
-            .padding()
+            .padding(.horizontal)
+            .padding(.vertical, 8)
         }
-        .frame(width: 500, height: 450)
+        .frame(width: 400, height: 300)
+        .onAppear {
+            isFocused = true
+        }
     }
 
-    private func saveCollection() {
-        let tags = tagsInput
-            .split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
+    private func saveNote() {
+        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedContent.isEmpty else { return }
 
-        appState.addCollection(
-            type: type,
-            title: title,
-            content: content,
-            url: type == .link ? url : nil,
-            tags: tags
-        )
+        appState.addQuickNote(content: trimmedContent)
         dismiss()
     }
 }
@@ -754,18 +735,6 @@ struct FlowLayout: Layout {
     }
 }
 
-// MARK: - CollectionType Extension
-
-extension CollectionType {
-    var color: Color {
-        switch self {
-        case .text: return .blue
-        case .link: return .green
-        case .image: return .orange
-        case .file: return .purple
-        }
-    }
-}
 
 #Preview {
     MainWindowView()

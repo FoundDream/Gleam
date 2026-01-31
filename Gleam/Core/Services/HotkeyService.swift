@@ -19,7 +19,7 @@ class HotkeyService {
     // Hotkey callbacks
     var onTranslationHotkey: (() -> Void)?
     var onScreenshotHotkey: (() -> Void)?
-    var onCollectionHotkey: (() -> Void)?
+    var onQuickNoteHotkey: (() -> Void)?  // 随手记快捷键
 
     private init() {}
 
@@ -39,7 +39,7 @@ class HotkeyService {
             modifiers: UInt32(optionKey)
         )
 
-        // Register collection hotkey (Option + C)
+        // Register quick note hotkey (Option + C) 随手记
         registerHotkey(
             id: 3,
             keyCode: UInt32(kVK_ANSI_C),
@@ -109,7 +109,7 @@ class HotkeyService {
                 case 2:
                     HotkeyService.shared.onScreenshotHotkey?()
                 case 3:
-                    HotkeyService.shared.onCollectionHotkey?()
+                    HotkeyService.shared.onQuickNoteHotkey?()  // 随手记
                 default:
                     break
                 }

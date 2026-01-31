@@ -22,14 +22,14 @@ class AppState: ObservableObject {
     // MARK: - Screenshot Module
     @Published var screenshots: [ScreenshotItem] = []
 
-    // MARK: - Collection Module
-    @Published var collections: [CollectionItem] = []
+    // MARK: - QuickNote Module (随手记)
+    @Published var quickNotes: [QuickNote] = []
 
     // MARK: - UI State
-    @Published var selectedTab: SidebarTab = .collections
+    @Published var selectedTab: SidebarTab = .quickNotes
     @Published var searchText: String = ""
-    @Published var showNewCollectionSheet: Bool = false
-    @Published var selectedCollectionId: UUID?
+    @Published var showQuickNoteWindow: Bool = false
+    @Published var selectedNoteId: UUID?
     @Published var selectedScreenshotId: UUID?
 
     private let db = DatabaseManager.shared
@@ -42,51 +42,47 @@ class AppState: ObservableObject {
 
     private func loadData() {
         // Load data from database
-        collections = db.fetchAllCollections()
+        quickNotes = db.fetchAllQuickNotes()
         screenshots = db.fetchAllScreenshots()
         translationHistory = db.fetchAllTranslations()
 
-        print("Loaded \(collections.count) collections, \(screenshots.count) screenshots, \(translationHistory.count) translation records")
+        print("Loaded \(quickNotes.count) notes, \(screenshots.count) screenshots, \(translationHistory.count) translation records")
     }
 
-    // MARK: - Collection Operations
+    // MARK: - QuickNote Operations (随手记)
 
-    func addCollection(type: CollectionType, title: String, content: String, url: String? = nil, tags: [String] = []) {
-        let item = CollectionItem(
+    func addQuickNote(content: String) {
+        let note = QuickNote(
             id: UUID(),
-            type: type,
-            title: title,
             content: content,
-            url: url,
-            tags: tags,
             createdAt: Date(),
             updatedAt: Date()
         )
 
         // Save to database
-        if db.insertCollection(item) {
-            collections.insert(item, at: 0)
-            print("Collection saved: \(title)")
+        if db.insertQuickNote(note) {
+            quickNotes.insert(note, at: 0)
+            print("Note saved")
         } else {
-            print("Failed to save collection: \(title)")
+            print("Failed to save note")
         }
     }
 
-    func deleteCollection(id: UUID) {
-        if db.deleteCollection(id: id) {
-            collections.removeAll { $0.id == id }
-            print("Collection deleted")
+    func deleteQuickNote(id: UUID) {
+        if db.deleteQuickNote(id: id) {
+            quickNotes.removeAll { $0.id == id }
+            print("Note deleted")
         }
     }
 
-    func updateCollection(_ item: CollectionItem) {
-        if db.updateCollection(item) {
-            if let index = collections.firstIndex(where: { $0.id == item.id }) {
-                var updated = item
+    func updateQuickNote(_ note: QuickNote) {
+        if db.updateQuickNote(note) {
+            if let index = quickNotes.firstIndex(where: { $0.id == note.id }) {
+                var updated = note
                 updated.updatedAt = Date()
-                collections[index] = updated
+                quickNotes[index] = updated
             }
-            print("Collection updated: \(item.title)")
+            print("Note updated")
         }
     }
 
@@ -150,14 +146,12 @@ class AppState: ObservableObject {
 
     // MARK: - Search
 
-    var filteredCollections: [CollectionItem] {
+    var filteredQuickNotes: [QuickNote] {
         if searchText.isEmpty {
-            return collections
+            return quickNotes
         }
-        return collections.filter { item in
-            item.title.localizedCaseInsensitiveContains(searchText) ||
-            item.content.localizedCaseInsensitiveContains(searchText) ||
-            item.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
+        return quickNotes.filter { note in
+            note.content.localizedCaseInsensitiveContains(searchText)
         }
     }
 
@@ -174,15 +168,15 @@ class AppState: ObservableObject {
 // MARK: - Sidebar Options
 
 enum SidebarTab: String, CaseIterable, Identifiable {
-    case collections = "Collections"
-    case screenshots = "Screenshots"
-    case translationHistory = "Translation History"
+    case quickNotes = "随手记"
+    case screenshots = "截图"
+    case translationHistory = "翻译历史"
 
     var id: String { rawValue }
 
     var icon: String {
         switch self {
-        case .collections: return "star.fill"
+        case .quickNotes: return "note.text"
         case .screenshots: return "photo.on.rectangle"
         case .translationHistory: return "clock.arrow.circlepath"
         }
