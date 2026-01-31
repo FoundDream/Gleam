@@ -19,8 +19,8 @@ struct TranslationPopoverView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Header with close button
+        VStack(alignment: .leading, spacing: 0) {
+            // Header
             HStack {
                 Image(systemName: "sparkles")
                     .foregroundStyle(.linearGradient(
@@ -28,7 +28,7 @@ struct TranslationPopoverView: View {
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ))
-                Text("Gleam Translation")
+                Text("翻译")
                     .font(.headline)
                     .fontWeight(.medium)
 
@@ -39,128 +39,147 @@ struct TranslationPopoverView: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.title3)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.secondary.opacity(0.6))
                 }
                 .buttonStyle(.plain)
-                .help("Close (ESC)")
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 14)
+            .padding(.bottom, 12)
 
             Divider()
+                .padding(.horizontal, 12)
 
-            // Original text
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text("Original")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Spacer()
-                    Button {
-                        copyToClipboard(originalText)
-                    } label: {
-                        Image(systemName: "doc.on.doc")
-                            .font(.caption)
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundColor(.secondary)
-                    .help("Copy original")
-                }
-
-                Text(originalText)
-                    .font(.body)
-                    .textSelection(.enabled)
-                    .lineLimit(5)
-            }
-
-            Divider()
-
-            // Translated text
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text("Translation")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-
-                    Spacer()
-
-                    // Engine selection
-                    Menu {
-                        ForEach(TranslationEngine.allCases) { engine in
+            // 内容区域 - 使用 ScrollView 支持长文本
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    // 原文
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text("原文")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Spacer()
                             Button {
-                                translationManager.setEngine(engine)
-                                Task {
-                                    await performTranslation()
-                                }
+                                copyToClipboard(originalText)
                             } label: {
-                                HStack {
-                                    Image(systemName: engine.iconName)
-                                    Text(engine.rawValue)
-                                    if translationManager.currentEngine == engine {
-                                        Image(systemName: "checkmark")
+                                Image(systemName: "doc.on.doc")
+                                    .font(.caption)
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundColor(.secondary)
+                        }
+
+                        Text(originalText)
+                            .font(.body)
+                            .textSelection(.enabled)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(nsColor: .textBackgroundColor).opacity(0.3))
+                    .cornerRadius(8)
+
+                    // 译文
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text("译文")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+
+                            Spacer()
+
+                            // Engine selection
+                            Menu {
+                                ForEach(TranslationEngine.allCases) { engine in
+                                    Button {
+                                        translationManager.setEngine(engine)
+                                        Task {
+                                            await performTranslation()
+                                        }
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: engine.iconName)
+                                            Text(engine.rawValue)
+                                            if translationManager.currentEngine == engine {
+                                                Image(systemName: "checkmark")
+                                            }
+                                        }
                                     }
                                 }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: translationManager.currentEngine.iconName)
+                                        .font(.caption2)
+                                    Text(translationManager.currentEngine.rawValue)
+                                        .font(.caption)
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Color.secondary.opacity(0.12))
+                                .cornerRadius(5)
                             }
-                        }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: translationManager.currentEngine.iconName)
-                            Text(translationManager.currentEngine.rawValue)
-                                .font(.caption)
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.secondary.opacity(0.15))
-                        .cornerRadius(6)
-                    }
-                    .menuStyle(.borderlessButton)
+                            .menuStyle(.borderlessButton)
 
-                    Button {
-                        copyToClipboard(translatedText)
-                    } label: {
-                        Image(systemName: "doc.on.doc")
-                            .font(.caption)
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundColor(.secondary)
-                    .disabled(isLoading || translatedText.isEmpty)
-                    .help("Copy translation")
-                }
-
-                if isLoading {
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .scaleEffect(0.7)
-                        Text("Translating with \(translationManager.currentEngine.rawValue)...")
-                            .font(.body)
+                            Button {
+                                copyToClipboard(translatedText)
+                            } label: {
+                                Image(systemName: "doc.on.doc")
+                                    .font(.caption)
+                            }
+                            .buttonStyle(.plain)
                             .foregroundColor(.secondary)
-                    }
-                    .frame(minHeight: 40)
-                } else if let error = errorMessage {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.orange)
-                            Text(error)
-                                .font(.callout)
-                                .foregroundColor(.secondary)
+                            .disabled(isLoading || translatedText.isEmpty)
                         }
 
-                        if error.contains("API Key") || error.contains("hostname") {
-                            Button("Open Settings") {
-                                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-                                onClose?()
+                        if isLoading {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                                Text("翻译中...")
+                                    .font(.body)
+                                    .foregroundColor(.secondary)
                             }
-                            .font(.caption)
+                            .frame(minHeight: 40)
+                        } else if let error = errorMessage {
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundColor(.orange)
+                                    Text(error)
+                                        .font(.callout)
+                                        .foregroundColor(.secondary)
+                                }
+
+                                if error.contains("API Key") || error.contains("hostname") {
+                                    Button("打开设置") {
+                                        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                                        onClose?()
+                                    }
+                                    .font(.caption)
+                                }
+                            }
+                            .frame(minHeight: 40)
+                        } else {
+                            Text(translatedText)
+                                .font(.body)
+                                .textSelection(.enabled)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
-                    .frame(minHeight: 40)
-                } else {
-                    Text(translatedText)
-                        .font(.body)
-                        .textSelection(.enabled)
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.blue.opacity(0.05))
+                    .cornerRadius(8)
                 }
+                .padding(12)
             }
+            .frame(maxHeight: 350)
 
-            // Footer: target language and retry button
+            Divider()
+                .padding(.horizontal, 12)
+
+            // Footer
             HStack {
                 Text("→ \(translationManager.targetLanguage.displayName)")
                     .font(.caption2)
@@ -168,26 +187,30 @@ struct TranslationPopoverView: View {
 
                 Spacer()
 
-                // Retry translation button
                 if !isLoading {
                     Button {
                         Task {
                             await performTranslation()
                         }
                     } label: {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.caption)
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.caption)
+                            Text("重试")
+                                .font(.caption)
+                        }
                     }
                     .buttonStyle(.plain)
                     .foregroundColor(.secondary)
-                    .help("Retry translation")
                 }
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
         }
-        .padding(16)
-        .frame(width: 380, alignment: .leading)
+        .frame(width: 380)
         .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 8)
         .task {
             await performTranslation()
         }
@@ -218,6 +241,6 @@ struct TranslationPopoverView: View {
 }
 
 #Preview {
-    TranslationPopoverView(originalText: "Hello, this is a test sentence for translation.")
+    TranslationPopoverView(originalText: "Hello, this is a test sentence for translation.\nThis is another line.\nAnd a third line to test multi-line support.")
         .padding()
 }

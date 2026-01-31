@@ -97,10 +97,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         let hostingView = NSHostingView(rootView: contentView)
 
-        // Create floating panel
+        // Create floating panel - 动态计算高度
+        let lineCount = text.components(separatedBy: .newlines).count
+        let estimatedHeight = min(450, max(280, 180 + lineCount * 40))
+
         let panel = GleamPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 380, height: 220),
-            styleMask: [.titled, .closable, .fullSizeContentView],
+            contentRect: NSRect(x: 0, y: 0, width: 380, height: CGFloat(estimatedHeight)),
+            styleMask: [.titled, .closable, .fullSizeContentView, .resizable],
             backing: .buffered,
             defer: false
         )
@@ -113,12 +116,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         panel.backgroundColor = .clear
         panel.isMovableByWindowBackground = true
         panel.hidesOnDeactivate = false
+        panel.minSize = NSSize(width: 380, height: 200)
+        panel.maxSize = NSSize(width: 500, height: 600)
 
         panel.onClose = { [weak self] in
             self?.translationPanel = nil
         }
 
-        positionPanel(panel, width: 380, height: 220)
+        positionPanel(panel, width: 380, height: CGFloat(estimatedHeight))
         panel.makeKeyAndOrderFront(nil)
         translationPanel = panel
     }
@@ -155,7 +160,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Create floating panel
         let panel = GleamPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 360, height: 220),
+            contentRect: NSRect(x: 0, y: 0, width: 320, height: 240),
             styleMask: [.titled, .closable, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -174,7 +179,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self?.quickNotePanel = nil
         }
 
-        positionPanel(panel, width: 360, height: 220)
+        positionPanel(panel, width: 320, height: 240)
         panel.makeKeyAndOrderFront(nil)
         quickNotePanel = panel
     }
